@@ -1,3 +1,29 @@
+
+
+Ask These 5 Questions (in order)
+
+1. Is it user-facing?
+    * External customers?
+    * Internal users only?
+    * Background jobs?
+3. How many services are affected?
+    * One service?
+    * A dependency chain?
+    * Everything behind ingress?
+4. How many environments?
+    * Prod only?
+    * Multiple clusters?
+    * One region or all regions?
+5. How much traffic is impacted?
+    * 1 pod?
+    * 1 deployment?
+    * Entire node pool?
+6. Is the impact growing or contained?
+    * Stable
+    * Degrading
+    * Cascading
+
+
 🚨 Production Incident Flow (One Page)
 
 Scope: Kubernetes + Linux
