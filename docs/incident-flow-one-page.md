@@ -52,8 +52,8 @@ Recent deploy?
 
 Quick check:
 
-kubectl get nodes
-kubectl get pods -A | grep -E 'Crash|Error|Pending'
+* kubectl get nodes
+* kubectl get pods -A | grep -E 'Crash|Error|Pending'
 
 3️⃣ Decide the Path (Critical Decision)
 Signal	Go Here
@@ -83,8 +83,8 @@ kubectl get hpa
 ✔ Roll back recent deploy
 
 Ingress / Traffic
-kubectl get pods -n ingress-nginx
-kubectl logs -n ingress-nginx <pod>
+* kubectl get pods -n ingress-nginx
+* kubectl logs -n ingress-nginx <pod>
 
 
 ✔ Restart ingress
@@ -98,16 +98,16 @@ kubectl describe node <node>
 
 If SSH works:
 
-uptime
-journalctl -xb
+* uptime
+* journalctl -xb
 
 
 ✔ Replace node if recovery >10 min
 
-CPU / Memory / Disk
-top
-free -h
-df -h
+* CPU / Memory / Disk
+* top
+* free -h
+* df -h
 
 
 ✔ Restart offender
@@ -117,12 +117,12 @@ df -h
 Rule: A replaced node is better than a sick node.
 
 6️⃣ Reboot / Replace Decision
-Condition	Action
-Kernel panic	Reboot
-Hung I/O	Reboot
-Disk full	Clean / Replace
-Repeated OOM	Replace
-Unknown + unstable	Replace
+* Condition	Action
+* Kernel panic	Reboot
+* Hung I/O	Reboot
+* Disk full	Clean / Replace
+* Repeated OOM	Replace
+* Unknown + unstable	Replace
 7️⃣ Escalate (≤15 min)
 
 Escalate if:
@@ -155,8 +155,8 @@ Pods Ready
 
 Nodes Ready
 
-kubectl get nodes
-kubectl get pods -A
+* kubectl get nodes
+* kubectl get pods -A
 
 9️⃣ Resolve & Communicate
 
@@ -172,10 +172,10 @@ Resolved. Service stable. RCA to follow.
 
 Restore service first
 
-Rollback beats debugging
+* Rollback beats debugging
 
-Replace nodes without guilt
+* Replace nodes without guilt
 
 Escalate after 15 minutes
 
-Document everything
+* Document everything
