@@ -114,153 +114,152 @@ Check cloud console:
 
 **Diagnose**
 
-df -h
-df -i
+* df -h
+* df -i
 
 **Find Large Files**
 
-du -xh / | sort -h | tail
+* du -xh / | sort -h | tail
 
 **Common Culprits**
-Logs
-Docker/container images
-Temp files
+* Logs
+* Docker/container images
+* Temp files
 
 **Mitigation**
 
-journalctl --vacuum-time=2d
-docker system prune -af
-rm -rf /tmp/*
+* journalctl --vacuum-time=2d
+* docker system prune -af
+* rm -rf /tmp/*
 
 ⚠️ Never delete blindly on production disks
 
 ## 5. Network Issues
 **Symptoms**
-Packet loss
-Cannot reach dependencies
-Intermittent failures
+* Packet loss
+* Cannot reach dependencies
+* Intermittent failures
 
 **Diagnose**
 
-ip addr
-ip route
-ss -tulnp
-ping <gateway>
-traceroute <destination>
+* ip addr
+* ip route
+* ss -tulnp
+* ping <gateway>
+* traceroute <destination>
 
 **DNS Checks**
 
-cat /etc/resolv.conf
-dig example.com
+* cat /etc/resolv.conf
+* dig example.com
 
 **Mitigation**
-Restart network service (last resort)
-Fail over traffic
-Replace node if network unstable
+* Restart network service (last resort)
+* Fail over traffic
+* Replace node if network unstable
 
 ## 6. Time Skew / Clock Drift
 **Symptoms**
-TLS errors
-Authentication failures
-Distributed system instability
+* TLS errors
+* Authentication failures
+* Distributed system instability
 
 **Diagnose**
-
-timedatectl
-chronyc tracking
+* timedatectl
+* chronyc tracking
 
 **Fix**
 
-timedatectl set-ntp true
-systemctl restart chronyd
+* timedatectl set-ntp true
+* systemctl restart chronyd
 
 ## 7. File Descriptor Exhaustion
 **Symptoms**
-“Too many open files”
-Services failing under load
+* “Too many open files”
+* Services failing under load
 
 **Diagnose**
 
-ulimit -n
-cat /proc/sys/fs/file-max
-lsof | wc -l
+* ulimit -n
+* cat /proc/sys/fs/file-max
+* lsof | wc -l
 
 **Mitigation**
 
-Restart leaking process
-Increase limits cautiously
-Fix application leak
+* Restart leaking process
+* Increase limits cautiously
+* Fix application leak
 
 
 ## 8. Zombie / Hung Processes
 **Diagnose**
 
-ps aux | grep Z
-ps -eo pid,stat,cmd | grep D
+* ps aux | grep Z
+* ps -eo pid,stat,cmd | grep D
 
 **Mitigation**
 
-Restart parent process
-Reboot node if unkillable
+* Restart parent process
+* Reboot node if unkillable
 
 ## 9. Kernel / System Issues
 **Symptoms**
-Kernel warnings
-Soft lockups
-Random freezes
+* Kernel warnings
+* Soft lockups
+* Random freezes
 
 **Diagnose**
 
-dmesg -T | tail
-journalctl -k
+* dmesg -T | tail
+* journalctl -k
 
 **Mitigation**
 
-Reboot node
-Replace node if recurring
-Escalate to platform/kernel team
+* Reboot node
+* Replace node if recurring
+* Escalate to platform/kernel team
 
 ## 10. Safe Restart Checklist
 **Before restarting anything:**
 
-Confirm HA / replicas exist
-Drain traffic if possible
-Announce in incident channel
-systemctl restart <service>
+* Confirm HA / replicas exist
+* Drain traffic if possible
+* Announce in incident channel
+* systemctl restart <service>
 
 **After restart:**
 
-Verify service health
-Monitor for regression
+* Verify service health
+* Monitor for regression
 
 ## 11. Reboot Decision Matrix
-Situation.............,,Reboot?
-Kernel panic..........,,✅ Immediately
-Disk full.............,,❌ Fix first
-OOM storm.............,,⚠️ After mitigation
-Hung I/O..............,,✅ Often required
-Intermittent issue....,,❌ Investigate
+** Situation.............,,Reboot?
+* Kernel panic..........,,✅ Immediately
+* Disk full.............,,❌ Fix first
+* OOM storm.............,,⚠️ After mitigation
+* Hung I/O..............,,✅ Often required
+* Intermittent issue....,,❌ Investigate
 
 ## 12. Post-Incident Actions (Mandatory)
 **After recovery:**
-Capture timeline
-Save logs
-Identify root cause
-Create follow-up task
-Update monitoring/runbooks
+* Capture timeline
+* Save logs
+* Identify root cause
+* Create follow-up task
+* Update monitoring/runbooks
 
 ## 13. Emergency Commands Cheat Sheet
 
-uptime
-top
-free -h
-df -h
-journalctl -xe
-dmesg | tail
-ss -tulnp
+* uptime
+* top
+* free -h
+* df -h
+* journalctl -xe
+* dmesg | tail
+* ss -tulnp
 
-ps aux --sort=-%cpu | head
+* ps aux --sort=-%cpu | head
 
 📌 Operator Rule (Pin This)
 
-Restore service first. Root cause second. Documentation always.
+* Restore service first. Root cause second. Documentation always.
