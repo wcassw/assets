@@ -3,114 +3,114 @@ A practical guide for on-call Linux incidents
 
 ### 0. Before You Touch Anything (Golden Rules)
  1. Confirm impact
-What is broken?
-Who is affected?
-Is it user-facing?
+* What is broken?
+* Who is affected?
+* Is it user-facing?
 
 2. Stabilize first
-Restore service availability
-Then investigate root cause
+* Restore service availability
+* Then investigate root cause
 
 3. Change as little as possible
-Avoid “exploratory fixes”
-Prefer reversible actions
+* Avoid “exploratory fixes”
+* Prefer reversible actions
 
 4. Document actions
-Commands run
-Files changed
-Time of change
+* Commands run
+* Files changed
+* Time of change
 
 ## 1. Host Unreachable / SSH Fails
 **Symptoms**
-SSH timeout
-Monitoring reports host down
-Node marked NotReady (Kubernetes)
+* SSH timeout
+* Monitoring reports host down
+* Node marked NotReady (Kubernetes)
 
 **Immediate Checks**
 
-ping host
-nc -zv host 22
+* ping host
+* nc -zv host 22
 
 **If Using Cloud**
 
 Check cloud console:
-Instance running?
-Network interface attached?
-Security group / firewall rules?
-Check provider incident status
+* Instance running?
+* Network interface attached?
+* Security group / firewall rules?
+* Check provider incident status
 
 **If Console Access Available**
 
-uptime
-dmesg | tail
-journalctl -xb
+* uptime
+* dmesg | tail
+* journalctl -xb
 
 **Common Causes**
 
-Kernel panic
-Disk full
-Network interface down
-OOM storm
+* Kernel panic
+* Disk full
+* Network interface down
+* OOM storm
 
 **Mitigation**
-Reboot if unresponsive
-Replace node if recovery >10 minutes
+* Reboot if unresponsive
+* Replace node if recovery >10 minutes
 
 ## 2. High Load Average / CPU Saturation
 **Symptoms**
 
-High load
-Slow commands
-Latency alerts
+* High load
+* Slow commands
+* Latency alerts
 
 **Diagnose**
 
-uptime
-top
-htop
-mpstat -P ALL 1
+* uptime
+* top
+* htop
+* mpstat -P ALL 1
 
 **Identify Culprit**
 
-ps -eo pid,ppid,cmd,%cpu,%mem --sort=-%cpu | head
+* ps -eo pid,ppid,cmd,%cpu,%mem --sort=-%cpu | head
 
 **Mitigation**
 
-Restart runaway process
-Scale service (preferred)
-Throttle or kill process (last resort)
+* Restart runaway process
+* Scale service (preferred)
+* Throttle or kill process (last resort)
 
-kill -TERM <pid>
-kill -KILL <pid>   # only if necessary
+* kill -TERM <pid>
+* kill -KILL <pid>   # only if necessary
 
 ## 3. Memory Pressure / OOM Kills
 **Symptoms**
-Processes killed
-NodeMemoryPressure
-Kernel OOM logs
+* Processes killed
+* NodeMemoryPressure
+* Kernel OOM logs
 
 **Diagnose**
 
-free -h
-vmstat 1
-dmesg | grep -i oom
-journalctl -k | grep -i oom
+* free -h
+* vmstat 1
+* dmesg | grep -i oom
+* journalctl -k | grep -i oom
 
 **Find Memory Hogs**
 
-ps aux --sort=-%mem | head
+* ps aux --sort=-%mem | head
 
 **Mitigation**
-Restart offending process
-Increase memory limits
-Add swap (temporary mitigation only)
-Replace node if persistent
+* Restart offending process
+* Increase memory limits
+* Add swap (temporary mitigation only)
+* Replace node if persistent
 
 ## 4. Disk Full / Disk Pressure
 **Symptoms**
-Writes failing
-Pods evicted
-No space left on device
+* Writes failing
+* Pods evicted
+* No space left on device
 
 **Diagnose**
 
