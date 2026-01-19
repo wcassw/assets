@@ -65,17 +65,17 @@ Rule: Kubernetes first. SSH only if K8s points you there.
 
 4️⃣ Kubernetes Path (Fast Fixes)
 Deployments / Pods
-kubectl describe pod <pod>
-kubectl logs <pod> --previous
-kubectl rollout undo deployment <name>
+* kubectl describe pod <pod>
+* kubectl logs <pod> --previous
+* kubectl rollout undo deployment <name>
 
 
 ✔ Roll back before debugging
 ❌ No shelling into pods during outages
 
 Latency / Errors
-kubectl top pods
-kubectl get hpa
+* kubectl top pods
+* kubectl get hpa
 
 
 ✔ Scale replicas
@@ -93,7 +93,7 @@ Ingress / Traffic
 
 5️⃣ Linux Path (Only When Needed)
 Node NotReady / Unreachable
-kubectl describe node <node>
+* kubectl describe node <node>
 
 
 If SSH works:
