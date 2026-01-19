@@ -27,8 +27,9 @@ Monitoring reports host down
 Node marked NotReady (Kubernetes)
 
 **Immediate Checks**
-ping <host>
-nc -zv <host> 22
+
+ping host
+nc -zv host 22
 
 **If Using Cloud**
 
@@ -39,11 +40,13 @@ Security group / firewall rules?
 Check provider incident status
 
 **If Console Access Available**
+
 uptime
 dmesg | tail
 journalctl -xb
 
 **Common Causes**
+
 Kernel panic
 Disk full
 Network interface down
@@ -55,20 +58,24 @@ Replace node if recovery >10 minutes
 
 ## 2. High Load Average / CPU Saturation
 **Symptoms**
+
 High load
 Slow commands
 Latency alerts
 
 **Diagnose**
+
 uptime
 top
 htop
 mpstat -P ALL 1
 
 **Identify Culprit**
+
 ps -eo pid,ppid,cmd,%cpu,%mem --sort=-%cpu | head
 
 **Mitigation**
+
 Restart runaway process
 Scale service (preferred)
 Throttle or kill process (last resort)
@@ -83,12 +90,14 @@ NodeMemoryPressure
 Kernel OOM logs
 
 **Diagnose**
+
 free -h
 vmstat 1
 dmesg | grep -i oom
 journalctl -k | grep -i oom
 
 **Find Memory Hogs**
+
 ps aux --sort=-%mem | head
 
 **Mitigation**
@@ -104,10 +113,12 @@ Pods evicted
 No space left on device
 
 **Diagnose**
+
 df -h
 df -i
 
 **Find Large Files**
+
 du -xh / | sort -h | tail
 
 **Common Culprits**
@@ -116,6 +127,7 @@ Docker/container images
 Temp files
 
 **Mitigation**
+
 journalctl --vacuum-time=2d
 docker system prune -af
 rm -rf /tmp/*
@@ -129,6 +141,7 @@ Cannot reach dependencies
 Intermittent failures
 
 **Diagnose**
+
 ip addr
 ip route
 ss -tulnp
@@ -136,6 +149,7 @@ ping <gateway>
 traceroute <destination>
 
 **DNS Checks**
+
 cat /etc/resolv.conf
 dig example.com
 
@@ -151,10 +165,12 @@ Authentication failures
 Distributed system instability
 
 **Diagnose**
+
 timedatectl
 chronyc tracking
 
 **Fix**
+
 timedatectl set-ntp true
 systemctl restart chronyd
 
@@ -164,11 +180,13 @@ systemctl restart chronyd
 Services failing under load
 
 **Diagnose**
+
 ulimit -n
 cat /proc/sys/fs/file-max
 lsof | wc -l
 
 **Mitigation**
+
 Restart leaking process
 Increase limits cautiously
 Fix application leak
@@ -176,10 +194,12 @@ Fix application leak
 
 ## 8. Zombie / Hung Processes
 **Diagnose**
+
 ps aux | grep Z
 ps -eo pid,stat,cmd | grep D
 
 **Mitigation**
+
 Restart parent process
 Reboot node if unkillable
 
@@ -190,22 +210,26 @@ Soft lockups
 Random freezes
 
 **Diagnose**
+
 dmesg -T | tail
 journalctl -k
 
 **Mitigation**
+
 Reboot node
 Replace node if recurring
 Escalate to platform/kernel team
 
 ## 10. Safe Restart Checklist
 **Before restarting anything:**
+
 Confirm HA / replicas exist
 Drain traffic if possible
 Announce in incident channel
 systemctl restart <service>
 
 **After restart:**
+
 Verify service health
 Monitor for regression
 
@@ -226,6 +250,7 @@ Create follow-up task
 Update monitoring/runbooks
 
 ## 13. Emergency Commands Cheat Sheet
+
 uptime
 top
 free -h
@@ -233,6 +258,7 @@ df -h
 journalctl -xe
 dmesg | tail
 ss -tulnp
+
 ps aux --sort=-%cpu | head
 
 📌 Operator Rule (Pin This)
