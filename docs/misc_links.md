@@ -246,4 +246,9 @@ if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=False)
 `
 
-# 
+# ansible
+https://github.com/Manohar-1305/ansible_playbook_k8s-installation
+
+# cost
+https://github.com/Manohar-1305/aws_cost_projector
+
