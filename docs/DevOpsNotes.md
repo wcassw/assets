@@ -839,6 +839,7 @@ Rotate keys
 trivy image app
 snyk test
 ```
+- Compliance (PCI-DSS, SOC2, ISO)
 
 ## DevOps Best Practices
 - Automate everything
