@@ -484,3 +484,15 @@ clean         # Clean up branches
 
 **Automate the tiny things that break your flow**
 
+## Tracking
+
+1. Write a record of your day actions
+2. Write in how you spend that time.
+3. Write the names of the people you meet.
+4. Write a gratitude note
+5. Write down what almost pulled you away from what you want to focus on
+6. Capture your doodling ideas
+7. It’s an investment in yourself
+
+
+
