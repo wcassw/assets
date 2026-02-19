@@ -71,6 +71,98 @@ systemctl enable nginx
 systemctl stop nginx
 ```
 
+### Troubleshoot Linux
+```
+1. Start With the Kernel’s Perspective
+>>> uptime
+1m > 5m > 15m — load is increasing, things are getting worse
+1m < 5m < 15m — load is dropping, system is recovering
+1m ~ 5m ~ 15m — The load is consistent (stable)
+
+2. Inspect Processes
+# Top 10 memory consumers
+ps -eo pid,ppid,%cpu,%mem,rss,stat,wchan,cmd --sort=-%mem | head -10
+   
+# Top 10 CPU consumers
+ps -eo pid,ppid,%cpu,%mem,rss,stat,wchan,cmd --sort=-%cpu | head -10
+
+stat — process state. Things to watch for:
+R : Running (Application is actively using CPU)
+S : Sleeping (Process is waiting on an event or lock)
+D : uninterruptible sleep (usually waiting on I/O)
+Z: Zombie (terminated but not reaped by parent)
+
+# Processes in D state (uninterruptible sleep)
+ps -eo pid,ppid,stat,wchan,cmd | awk '$3 ~ /D/'
+if output: postgres: writer process or checkpointer, indicating that the system is experiencing a disk or storage bottleneck, not an application-level problem.
+
+# Zombies Process
+ps -eo pid,ppid,stat,wchan,cmd | awk '$3 ~ /Z/'
+Many zombies indicate a buggy parent process not calling wait().
+
+3. Analyze process behavior (Why the process is consuming resources?)
+# Inspect open files / network / resources
+lsof -p <PID>
+
+# Monitor its activity
+top -p <PID>
+
+# Check for I/O bottlenecks (If stat is D - blocked on I/O)
+iotop -o          # Per-process I/O usage
+iostat -x 1 5     # Disk device performance
+vmstat 1 5        # CPU and I/O wait
+
+# Trace the process (optional, advanced)
+strace -p <PID>   # Trace system calls
+
+# Investigate threads (Multi-threaded app may have one hot thread consuming CPU)
+ps -L -p <PID> -o pid,tid,psr,%cpu,stat,comm
+
+- CPU bound — application code or infinite loop
+- Memory bound — memory leak or large workload
+- I/O bound — slow disk, database writes, network delay
+
+4. Take Corrective Action
+# CPU-bound process (high %CPU, stat R) Possible actions:
+- Restart the process if it’s stuck.
+- Limit CPU usage (cpulimit, cgroups).
+- Optimize application or workload.
+
+# Memory-bound process (high %MEM or RSS) Possible actions:
+- Restart process to free memory.
+- Tune application memory settings (heap size, cache limits).
+- Add more RAM if workload is legitimate.
+
+# I/O-bound / blocked processes (D state, wchan=io_schedule) Possible actions:
+- Check disk throughput, latency, or errors.
+- Optimize database writes or batch operations.
+- Upgrade storage if system consistently blocks.
+- Killing a D process usually does not help until I/O completes.
+
+# Zombie processes (Z state)  Possible action:
+Identify parent process and ensure it properly reaps child processes. If persistent, restart the parent process.
+
+# Normal but heavy workload Possible actions:
+- Tune or scale the system (more CPU, RAM, or faster storage).
+- Schedule heavy tasks during off-peak hours.
+
+5. Monitor & Prevent  Possible actions:
+
+- CPU usage — Identify runaway processes or sustained high CPU that could indicate a bug or heavy workload. Track both total CPU usage and per-process CPU consumption.
+- Memory usage — Keep an eye on total RAM, swap usage, and per-process memory (RSS). Sudden memory spikes may signal leaks or inefficient applications.
+- I/O performance — Monitor disk read/write speeds, latency, and queues. Processes stuck in D state often indicate storage bottlenecks.
+- Load averages — Compare system load to the number of CPU cores. Persistent load higher than core count may indicate CPU saturation.
+- Process states — Track D (blocked I/O) and Z (zombie) processes. A buildup can indicate underlying performance or application issues.
+
+6. Alerts & Thresholds
+- CPU alerts: trigger when usage exceeds 80–90% for a sustained period.
+- Memory alerts: warn when usage is above 85%, or swap starts increasing.
+- I/O alerts: notify when I/O wait time exceeds 20–30% or disk latency spikes.
+- Process alerts: detect if multiple processes are stuck in D or zombies accumulate.
+
+```
+
+
 ## Git Cheat Sheet
 ### Basic Commands
 ```
