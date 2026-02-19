@@ -735,7 +735,7 @@ kubectl expose deployment nginx-deployment \
   --port=80 --target-port=80
 ```
 
-**Debug a Failing Pod**
+**Debug a Failing Pod / Troubleshoot**
 ```
 List Pods and Check Status
     kubectl get pod
@@ -799,6 +799,143 @@ Use kubectl get <resource> -o yaml to see the full configuration of any resource
 Use kubectl edit <resource> <name> for quick inline edits when you know what to fix.
 Use kubectl rollout history and kubectl rollout undo when experimenting with new versions in production.
 ```
+
+### Sidecar
+A sidecar container runs in the same Pod as your application and extends its behavior — logging, metrics, proxying, security — while sharing:
+- CPU and memory (via cgroups)
+- Disk I/O
+- Network and kernel scheduling
+
+```
+Classic Architecture: File-Based Logging Sidecar
+Pod
+├── app-container (nginx)
+│   └── writes logs to files
+├── logging-sidecar
+│   └── tails / processes those files
+└── emptyDir (shared volume)
+```
+
+**Baseline Pod**
+```
+apiVersion: v1
+kind: Pod
+metadata:
+  name: webserver-baseline
+spec:
+  volumes:
+    - name: shared-logs
+      emptyDir: {}
+
+  containers:
+    - name: nginx
+      image: nginx:latest
+      volumeMounts:
+        - name: shared-logs
+          mountPath: /var/log/nginx
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "128Mi"
+        limits:
+          cpu: "400m"
+          memory: "256Mi"
+
+    - name: logging-sidecar
+      image: busybox:latest
+      command:
+        - sh
+        - -c
+        - >
+          while true; do
+            cat /var/log/nginx/access.log /var/log/nginx/error.log || true;
+            sleep 5;
+          done
+      volumeMounts:
+        - name: shared-logs
+          mountPath: /var/log/nginx
+      resources:
+        requests:
+          cpu: "50m"
+          memory: "64Mi"
+        limits:
+          cpu: "200m"
+          memory: "128Mi"
+```
+
+**Intent-Aware Thinking**
+```
+apiVersion: v1
+kind: Pod
+metadata:
+  name: webserver-intent
+spec:
+  volumes:
+    - name: shared-logs
+      emptyDir: {}
+
+  containers:
+    - name: nginx
+      image: nginx:latest
+      volumeMounts:
+        - name: shared-logs
+          mountPath: /var/log/nginx
+      resources:
+        requests:
+          cpu: "200m"
+          memory: "128Mi"
+        limits:
+          cpu: "600m"
+          memory: "256Mi"
+
+    - name: adaptive-sidecar
+      image: busybox:latest
+      # Pseudocode-level behavior:
+      # - Detect sustained system or application pressure
+      # - Reduce log processing frequency or volume
+      # - Preserve critical error signals only
+      resources:
+        requests:
+          cpu: "20m"
+          memory: "32Mi"
+        limits:
+          cpu: "100m"
+          memory: "64Mi"
+```
+
+**What Actually Changes: Classic Sidecar vs Intent-Aware Approach**
+```
+| Aspect                    | Classic Sidecar (Most Teams Today)         | Intent-Aware Sidecar                             |
+| ------------------------- | ------------------------------------------ | ------------------------------------------------ |
+| 1.Behavior Under Load     | Continues processing all logs aggressively | Samples, buffers, or delays non-critical logs    |
+| 2.Resource Usage          | Competes equally with the application      | Explicitly yields CPU and I/O to the application |
+| 3.CPU & I/O Contention    | Increases during traffic spikes            | Reduced by design under pressure                 |
+| 4.P95 / P99 Latency       | Gradually increases                        | Remains stable and predictable                   |
+| 5.Observability Signals   | Pods look healthy; no alerts               | Reduced log volume during peaks (expected)       |
+| 6.User Experience         | “It feels slow” complaints                 | Consistent, reliable performance                 |
+| 7.Failure Mode            | Silent performance degradation             | Graceful degradation of observability            |
+| 8.Primary Trade-off       | Preserves every log line                   | Drops or samples low-value logs to protect users |
+```
+
+**For proxies**
+```
+| If your system is…                                | Use this               | Why                                       |
+| ------------------------------------------------- | ---------------------- | ----------------------------------------- |
+| 1.Serving real users (web apps, APIs, gateways)   | Intent-Aware Sidecar   | Keeps the app fast when traffic spikes    |
+| 2.Slow under load but nothing crashes             | Intent-Aware Sidecar   | Fixes “feels slow” problems               |
+| 3.Handling a lot of logs or proxy traffic         | Intent-Aware Sidecar   | Prevents sidecars from stealing resources |
+| 4.Internal tools or low traffic                   | Classic Sidecar        | Simpler and usually good enough           |
+| 5.Batch jobs or background processing             | Classic Sidecar        | Latency doesn’t matter                    |
+| 6.Early development or testing                    | Classic Sidecar        | Less setup, faster iteration              |
+```
+
+**When Should You Actually Care About This?**
+When any of the following are true:
+- Your application is latency-sensitive (APIs, gateways, auth, payments)
+- You see p95/p99 latency drift without obvious errors
+- CPU or I/O saturation correlates with observability load
+- You run service meshes or heavy sidecars
+- You’ve heard: “Nothing is broken, but it feels slower”
 
 ## HELM
 ### BASIC COMMANDS
