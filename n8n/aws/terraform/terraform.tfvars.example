@@ -1,0 +1,16 @@
+aws_region      = "eu-west-1"
+project_name    = "n8n"
+environment     = "prod"
+domain_name     = "n8n.example.com"
+certificate_arn = "arn:aws:acm:eu-west-1:123456789012:certificate/replace-me"
+
+github_owner  = "your-github-org-or-user"
+github_repo   = "n8n-aws-starter"
+github_branch = "main"
+
+# Optional overrides
+# desired_count       = 2
+# ecs_cpu             = 1024
+# ecs_memory          = 2048
+# rds_instance_class  = "db.t4g.small"
+# enable_deletion_protection = true
