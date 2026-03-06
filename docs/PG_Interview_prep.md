@@ -150,8 +150,8 @@ PostgreSQL decides the most efficient way to run a query.
 ### Useful commands
 ```sql
 EXPLAIN SELECT * FROM orders WHERE customer_id = 42;
-
 EXPLAIN ANALYZE SELECT * FROM orders WHERE customer_id = 42;
+```
 
 ### Difference
  - EXPLAIN: estimated plan
