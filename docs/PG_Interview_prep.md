@@ -478,4 +478,71 @@ SELECT * FROM pg_stat_replication;
 
 ---
 
-## 
+## 18. Security Basics
+### Key topics
+- authentication methods
+- roles and privileges
+- pg_hba.conf
+- SSL/TLS
+- row-level security
+- auditing approach
+- secret rotation
+
+### Best practices
+- least privilege
+- separate admin and app roles
+- encrypt in transit
+- review default permissions
+- protect backups and WAL archives
+
+---
+
+## 19. PostgreSQL Competitive Positioning
+### PostgreSQL vs MySQL
+#### PostgreSQL strengths
+- richer SQL
+- stronger extensibility
+- better advanced data types
+- more powerful indexing options
+
+#### MySQL strengths
+- often seen as simpler for common web stacks
+- broad ecosystem familiarity
+- popular managed offerings
+
+### PostgreSQL vs Oracle
+#### PostgreSQL strengths
+- lower licensing cost
+- open ecosystem
+- less vendor lock-in
+- strong modern developer fit
+
+#### Oracle strengths
+- deep enterprise tooling
+- strong legacy enterprise footprint
+- mature ecosystem in large regulated orgs
+
+### PostgreSQL vs SQL Server
+#### PostgreSQL strengths
+- portability
+- open source
+- lower cost
+- strong Linux/cloud fit
+
+#### SQL Server strengths
+- tight Microsoft ecosystem integration
+- strong enterprise tooling
+- easy fit for some .NET-heavy shops
+
+### PostgreSQL vs NoSQL
+#### PostgreSQL strengths
+- joins
+- transactions
+- relational integrity
+- mixed workload flexibility
+
+#### NoSQL strengths
+- specific scale models
+- schema flexibility
+- simpler patterns for some narrow workloads
+
