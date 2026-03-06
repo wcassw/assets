@@ -152,3 +152,111 @@ PostgreSQL decides the most efficient way to run a query.
 EXPLAIN SELECT * FROM orders WHERE customer_id = 42;
 
 EXPLAIN ANALYZE SELECT * FROM orders WHERE customer_id = 42;
+
+### Difference
+ - EXPLAIN: estimated plan
+ - EXPLAIN ANALYZE: actual execution with timing
+
+### What to look for
+ - wrong row estimates
+ - sequential scans on large tables
+ - bad join order
+ - sorting spilling to disk
+ - missing indexes
+ - high loop counts
+
+### Interview line
+> A slow query is often a planning problem, a statistics problem, an indexing problem, or a data-shape problem.
+
+---
+
+## 7. Index Types
+### B-tree
+Default index type. Best for:
+ - equality
+ - range queries
+ - sorting
+
+### Hash
+Best for equality only. Less commonly used.
+
+### GIN
+Useful for:
+ - JSONB
+ - arrays
+ - full-text search
+
+### GiST
+
+Useful for:
+
+ - geometric data
+ - ranges
+ - full-text search
+ - PostGIS
+
+### BRIN
+Good for very large tables where values are naturally ordered, such as:
+ - timestamps
+ - append-only logs
+
+### Interview line
+> Index choice should reflect access patterns, not just data type.
+
+---
+
+## 8. Transactions and Isolation Levels
+### ACID
+- Atomicity
+- Consistency
+- Isolation
+- Durability
+
+### Isolation levels in PostgreSQL
+- Read Committed
+- Repeatable Read
+- Serializable
+
+### Default
+- Read Committed
+
+### Notes
+- PostgreSQL does not implement Read Uncommitted separately; it behaves like Read Committed.
+- Serializable in PostgreSQL uses predicate locking and conflict detection.
+
+### Common interview angle
+
+Explain tradeoff:
+- higher isolation = stronger guarantees
+- but more overhead / retry complexity
+
+---
+
+## 9. Locking and Concurrency
+### Lock types
+- row-level locks
+- table-level locks
+- advisory locks
+
+### Row lock examples
+```sql
+SELECT * FROM accounts WHERE id = 1 FOR UPDATE;
+SELECT * FROM jobs WHERE status = 'queued' FOR UPDATE SKIP LOCKED;
+```
+### Important concepts
+- blocking
+- deadlocks
+- lock queues
+- long transactions
+
+### Common causes of pain
+- idle in transaction sessions
+- long-running updates
+- DDL changes on busy tables
+- missing indexes on foreign keys
+
+### Interview line
+> Many concurrency issues are caused less by PostgreSQL itself and more by application transaction design.
+
+---
+
