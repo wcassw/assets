@@ -546,3 +546,138 @@ SELECT * FROM pg_stat_replication;
 - schema flexibility
 - simpler patterns for some narrow workloads
 
+### PostgreSQL vs MongoDB
+#### PostgreSQL strengths
+1. Strong data integrity
+- PostgreSQL enforces:
+- schemas
+- constraints
+- foreign keys
+- transactions
+
+> This makes it very strong for systems where correctness matters.
+
+2. Excellent for complex queries
+PostgreSQL is better for:
+- joins
+- aggregations
+- reporting
+- analytics
+- multi-table relationships
+If your app depends on rich querying, PostgreSQL usually wins.
+
+3. ACID transactions
+It has strong transactional guarantees, which is important for:
+- banking
+- billing
+- orders
+- inventory
+- user permissions
+
+4. Mature SQL ecosystem
+SQL is standard, powerful, and widely understood.
+Tooling for PostgreSQL is excellent across BI, ETL, admin, and development.
+
+5. Better normalization and relational modeling
+If your data has clear relationships, PostgreSQL models it cleanly and avoids duplication.
+
+6. Advanced features
+PostgreSQL also supports:
+- JSON/JSONB
+- indexing options
+- full-text search
+- extensions
+- geospatial support with PostGIS
+
+So it is not just “old-school SQL.” It is very capable and flexible.
+
+#### NoSQL strengths
+1. Flexible schema
+You can store documents with different fields without redesigning tables first.
+**Good for:**
+- rapidly changing products
+- prototype-heavy teams
+- event or content data
+- varied user-generated data
+
+2. Natural fit for JSON-style application data
+Modern apps often work with nested JSON objects.
+MongoDB stores data in a format close to what the application already uses.
+This can reduce mapping complexity.
+
+3. Faster development in some cases
+For simple app flows, storing one full document instead of splitting across many tables can be easier and faster.
+
+4. Good for horizontal scaling patterns
+NoSQL systems are often designed with scale-out patterns in mind, especially for:
+- large write volumes
+- distributed workloads
+- globally spread apps
+
+5. Better for semi-structured or denormalized data
+If relationships are loose and documents are mostly read as a whole, MongoDB can feel more natural than relational modeling.
+
+### Simple rule of thumb
+#### Choose PostgreSQL when:
+- data accuracy matters
+- relationships are important
+- you need joins and reporting
+- transactions are critical
+
+#### Choose MongoDB / NoSQL when:
+- schema changes frequently
+- data is document-shaped
+- speed of iteration matters
+- denormalized storage is acceptable
+
+### Interview line
+> PostgreSQL is a strong default for many workloads, but competitive credibility comes from knowing where it is not the best answer.
+
+---
+
+## 20. “Postgres-Compatible” Talking Points
+### What to examine
+- wire protocol compatibility
+- SQL compatibility
+- extension compatibility
+- transaction semantics
+- replication compatibility
+- operational tooling compatibility
+
+### Hidden risks
+- partial compatibility
+- planner behaviour differences
+- unsupported extensions
+- migration surprises
+- ms based on narrow benchmarks
+
+### Interview line
+> “Compatible” is rarely binary; the real question is compatible with what, and under which workload assumptions?
+
+---
+
+## 21. Benchmark Skepticism
+### Always ask
+- what workload?
+- what schema?
+- what concurrency level?
+- what hardware?
+- what caching state?
+- what durability settings?
+- what data size?
+- were like-for-like configurations used?
+
+### Common benchmark traps
+- warmed cache only
+- unrealistic schema
+- disabled durability
+- cherry-picked queries
+- vendor-specific optimizations
+- no operational context
+
+### Interview line
+> A benchmark without workload context is mostly marketing.
+
+---
+
+## 
