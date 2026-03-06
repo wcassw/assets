@@ -260,3 +260,222 @@ SELECT * FROM jobs WHERE status = 'queued' FOR UPDATE SKIP LOCKED;
 
 ---
 
+## 10. Replication
+### Physical replication
+Replicates WAL changes at block level.
+
+### Best for
+- read replicas
+- standby servers
+- HA
+
+### Pros
+- simple
+- mature
+- full database copy
+
+### Cons
+- less selective
+- same major version family constraints
+
+### Logical replication
+Replicates data changes at table/publication level.
+
+### Best for
+- selective replication
+- migrations
+- version upgrades
+- integration use cases
+
+### Pros
+- more flexible
+- table-level control
+
+### Cons
+- more complexity
+- some edge cases and operational overhead
+
+### Sync vs Async
+- Synchronous: stronger durability, higher latency
+- Asynchronous: lower latency, some data loss risk on failover
+
+### Interview line
+> Physical replication is the default HA path; logical replication is the flexible path.
+
+---
+
+## 11. High Availability (HA)
+### Common HA goals
+- low RPO
+- low RTO
+- automatic failover
+- replica promotion
+- split-brain avoidance
+
+### Typical stack
+- primary
+- one or more replicas
+- failover manager / orchestrator
+- load balancer / connection routing
+
+### Key tradeoffs
+- availability vs consistency
+- automation vs operational safety
+- sync commit vs latency
+
+### Topics to know
+- failover
+- switchover
+- fencing
+- replica lag
+- client reconnection behavior
+
+---
+
+## 12. Backup and Recovery
+### Main approaches
+- pg_basebackup for base backups
+- WAL archiving for PITR
+- logical backups with pg_dump
+
+### PITR
+Point-in-Time Recovery allows restoring to a specific timestamp or transaction point.
+
+### Backup strategy
+A good production strategy includes:
+- base backups
+- WAL archiving
+- restore testing
+- retention policy
+- offsite storage
+
+### Interview line
+> A backup is only real if restore has been tested.
+
+---
+
+## 13. Partitioning
+### Why partition
+- large table management
+- pruning for query performance
+- lifecycle handling
+- easier maintenance
+
+### Common partition types
+- range
+- list
+- hash
+
+### Best fit
+- Usually large tables with predictable access patterns such as:
+- time-series data
+- billing data
+- event logs
+
+### Common mistakes
+- too many partitions
+- wrong key
+- expecting partitioning to fix poor schema/index design
+
+---
+
+## 14. Extensions
+### Why extensions matter
+PostgreSQL is highly extensible.
+
+### Common extensions
+- pg_stat_statements — query stats
+- PostGIS — geospatial
+- pgcrypto — cryptographic functions
+- uuid-ossp — UUID generation
+- hstore — key/value storage
+- citext — case-insensitive text
+
+### Interview line
+> PostgreSQL’s extension ecosystem is a competitive strength because it broadens use cases without changing database core behavior.
+
+---
+
+## 15. Observability and Troubleshooting
+### What to watch
+- CPU
+- memory
+- disk IOPS
+- WAL generation rate
+- checkpoint frequency
+- lock waits
+- query latency
+- replication lag
+- autovacuum activity
+- cache hit ratio
+
+### Useful views
+```sql
+SELECT * FROM pg_stat_activity;
+SELECT * FROM pg_stat_statements;
+SELECT * FROM pg_locks;
+SELECT * FROM pg_stat_replication;
+```
+
+### Common troubleshooting flow
+1. identify slow query or pressure point
+2. inspect pg_stat_activity
+3. use EXPLAIN ANALYZE
+4. check indexes and row estimates
+5. review locks, I/O, and vacuum behavior
+6. verify app-side transaction behavior
+
+---
+
+## 16. Common Performance Problems
+### Slow query causes
+- missing indexes
+- wrong index type
+- stale stats
+- bad joins
+- wide rows
+- too much data scanned
+- disk spills during sort/hash
+- application N+1 query patterns
+
+### Database-wide issues
+- connection overload
+- checkpoint spikes
+- WAL pressure
+- replication lag
+- bloat
+- long transactions
+- insufficient memory tuning
+
+### Interview line
+> Performance work starts with evidence, not guesses.
+
+---
+
+## 17. Tuning Basics
+### Memory settings
+- shared_buffers
+- work_mem
+- maintenance_work_mem
+- effective_cache_size
+
+### WAL / checkpoint settings
+- wal_level
+- max_wal_size
+- checkpoint_timeout
+- checkpoint_completion_target
+
+### Planner/statistics
+- default_statistics_target
+- autovacuum analyze behavior
+
+### Connection-related
+- max_connections
+- consider connection pooling with PgBouncer
+
+### Interview line
+> Tuning must follow workload shape; generic tuning without measurement can make systems worse.
+
+---
+
+## 
