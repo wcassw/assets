@@ -680,4 +680,80 @@ If relationships are loose and documents are mostly read as a whole, MongoDB can
 
 ---
 
-## 
+## 22. Behavioral Themes for Senior Interviews
+### Show these qualities
+- technical depth
+- skepticism without cynicism
+- structured thinking
+- credibility
+- clear communication
+- business judgment
+
+### Good framing
+- explain tradeoffs, not absolutes
+- separate evidence from opinion
+- speak in workload-specific terms
+- tie technical findings to business impact
+
+---
+
+## 23. Short Answers to Practice
+### What is MVCC?
+A concurrency model where updates create new row versions so readers and writers interfere less.
+
+### Why is WAL important?
+It guarantees durability and powers crash recovery and replication.
+
+### Why does bloat happen?
+Old row versions and index entries remain after updates/deletes until vacuum cleanup.
+
+### Physical vs logical replication?
+Physical copies WAL/block-level changes; logical sends higher-level data changes and is more flexible.
+
+### Why use PostgreSQL?
+It offers a strong mix of correctness, SQL power, extensibility, and operational maturity.
+
+### Biggest operational risks?
+Bloat, bad vacuum behavior, poor indexing, connection overload, lagging replicas, and untested recovery.
+
+---
+
+## 24. Fast Study Prompts
+### Use these to self-test:
+- Explain how a PostgreSQL commit works
+- Explain MVCC to a product manager
+- When does autovacuum become a production issue?
+- How do you investigate a slow query?
+- When is BRIN better than B-tree?
+- What does EXPLAIN ANALYZE tell you?
+- When choose logical replication?
+- What makes PostgreSQL hard to scale?
+- How would you challenge a competitor benchmark?
+- Where is PostgreSQL not the best fit?
+
+---
+
+## 25. Closing Summary
+### PostgreSQL is strongest when you need
+- reliability
+- advanced SQL
+- rich indexing
+- extensibility
+- strong general-purpose relational capabilities
+
+### PostgreSQL needs care around
+- vacuum and bloat
+- HA design
+- write-heavy scaling
+- connection management
+- careful workload-based tuning
+
+### Senior interview mindset
+- know internals
+- know tradeoffs
+- stay credible
+- speak clearly
+- connect technical facts to business decisions
+
+---
+
