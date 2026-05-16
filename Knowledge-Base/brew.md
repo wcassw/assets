@@ -116,3 +116,7 @@ Fix SSL of a package:
 $ brew install wget
 $ brew install --cask firefox
 ```
+
+## Git
+- https://github.com/Homebrew/homebrew-core
+
