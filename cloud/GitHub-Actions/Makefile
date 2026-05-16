@@ -1,19 +1,9 @@
-#
-#  Author: Hari Sekhon
-#  Date: 2022-06-14 11:11:23 +0100 (Tue, 14 Jun 2022)
-#
 #  vim:ts=4:sts=4:sw=4:noet
-#
-#  https://github.com/HariSekhon/GitHub-Actions
-#
-#  If you're using my code you're welcome to connect with me on LinkedIn and optionally send me feedback to help steer this or other code I publish
-#
-#  https://www.linkedin.com/in/HariSekhon
 #
 
 # For serious Makefiles see the DevOps Bash tools repo:
 #
-#	https://github.com/HariSekhon/DevOps-Bash-tools
+#	https://github.com/wcassw/assets/cloud/DevOps-Bash-tools
 #
 #	Makefile
 #	Makefile.in - generic include file with lots of Make targets
