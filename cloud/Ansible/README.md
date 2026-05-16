@@ -23,7 +23,7 @@
 ## Quick Ansible Doc
 
 See the [Ansible](https://github.com/wcassw/assets/Knowledge-Base/blob/main/ansible.md) page in
-the [HariSekhon/Knowledge-Base](https://github.com/wcassw/assets/Knowledge-Base) repo.
+the [wcassw/assets/cloud/Knowledge-Base](https://github.com/wcassw/assets/Knowledge-Base) repo.
 
 ## Ansible Inventory
 
