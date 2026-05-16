@@ -29,7 +29,7 @@
 - [Cloud Native Platform Engineering Associate (CNPA)](https://www.cncf.io/training/certification/#CNPA)
 - [Certified Cloud Native Platform Engineer (CNPE)](https://www.cncf.io/training/certification/#CNPE)
 
-##
+
 
 .
 
