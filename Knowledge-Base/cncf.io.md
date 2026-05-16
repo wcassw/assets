@@ -11,8 +11,7 @@
 - https://www.cncf.io/projects/prometheus/
 - https://www.cncf.io/projects/opentelemetry/
 
-## certifications
-- https://www.cncf.io/training/certification/
+## [certifications](https://www.cncf.io/training/certification/)
 
 - Certified Kubernetes Administrator (CKA)
 - Certified Kubernetes Application Developer (CKAD)
