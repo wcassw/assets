@@ -1,16 +1,5 @@
 # Ansible
 
-[![Ansible Playbook Syntax Check](https://github.com/wcassw/assets/cloud/Ansible/actions/workflows/ansible-playbook-syntax.yaml/badge.svg)](https://github.com/wcassw/assets/cloud/Ansible/actions/workflows/ansible-playbook-syntax.yaml)
-[![Validation](https://github.com/wcassw/assets/cloud/Ansible/actions/workflows/validate.yaml/badge.svg)](https://github.com/wcassw/assets/cloud/Ansible/actions/workflows/validate.yaml)
-[![Kics](https://github.com/wcassw/assets/cloud/Ansible/actions/workflows/kics.yaml/badge.svg)](https://github.com/wcassw/assets/cloud/wcassw/assets/cloud/actions/workflows/kics.yaml)
-[![Grype](https://github.com/wcassw/assets/cloud/Ansible/actions/workflows/grype.yaml/badge.svg)](https://github.com/wcassw/assets/cloud/Ansible/actions/workflows/grype.yaml)
-[![Semgrep](https://github.com/wcassw/assets/cloud/Ansible/actions/workflows/semgrep.yaml/badge.svg)](https://github.com/wcassw/assets/cloud/Ansible/actions/workflows/semgrep.yaml)
-[![Semgrep Cloud](https://github.com/wcassw/assets/cloud/Ansible/actions/workflows/semgrep-cloud.yaml/badge.svg)](https://github.com/wcassw/assets/cloud/Ansible/actions/workflows/semgrep-cloud.yaml)
-[![SonarCloud](https://github.com/wcassw/assets/cloud/Ansible/actions/workflows/sonarcloud.yaml/badge.svg)](https://github.com/wcassw/assets/cloud/Ansible/actions/workflows/sonarcloud.yaml)
-[![Systemd-Analyze Verify](https://github.com/wcassw/assets/cloud/Ansible/actions/workflows/systemd-analyze.yaml/badge.svg)](https://github.com/wcassw/assets/cloud/Ansible/actions/workflows/systemd-analyze.yaml)
-[![Trivy](https://github.com/wcassw/assets/cloud/Ansible/actions/workflows/trivy.yaml/badge.svg)](https://github.com/wcassw/assets/cloud/Ansible/actions/workflows/trivy.yaml)
-[![YAML](https://github.com/wcassw/assets/cloud/Ansible/actions/workflows/yaml.yaml/badge.svg)](https://github.com/wcassw/assets/cloud/Ansible/actions/workflows/yaml.yaml)
-
 <!-- INDEX_START -->
 
 - [Quick Ansible Doc](#quick-ansible-doc)
