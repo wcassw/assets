@@ -30,8 +30,6 @@ This guide gives you practical installation examples across Mac, Linux, AWS, Azu
 11. Backup and Restore Examples
 12. Troubleshooting Common Installation Problems
 13. Production Takeaways
-14. Seven Punchy Topic Ideas
-15. SEO Hashtags
 
 ---
 
