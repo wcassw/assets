@@ -1,4 +1,4 @@
-# MariaDB Installation on Mac, AWS, Azure, Google Cloud, and Linux — With Practical Examples
+# MariaDB Installation on Mac, AWS, Azure, Google Cloud, and Linux
 
 
 **Install MariaDB anywhere. Run it like you mean it.**
