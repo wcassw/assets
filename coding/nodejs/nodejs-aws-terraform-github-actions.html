@@ -1,0 +1,3521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ship It Right: Node.js → AWS with Terraform & GitHub Actions</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Lora:ital,wght@0,400;0,500;1,400&display=swap');
+
+  :root {
+    --bg: #0b0f19;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1f2d45;
+    --accent: #00d9ff;
+    --accent2: #ff6b35;
+    --accent3: #a78bfa;
+    --green: #34d399;
+    --yellow: #fbbf24;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --heading: #f8fafc;
+    --code-bg: #0d1117;
+    --tag-bg: #0f2027;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Lora', Georgia, serif;
+    font-size: 17px;
+    line-height: 1.8;
+    overflow-x: hidden;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    position: relative;
+    min-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 80px 5vw 60px;
+    overflow: hidden;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 70% 60% at 80% 40%, rgba(0,217,255,0.07) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 40% at 20% 80%, rgba(167,139,250,0.06) 0%, transparent 60%),
+      repeating-linear-gradient(
+        0deg, transparent, transparent 59px,
+        rgba(31,45,69,0.4) 60px
+      ),
+      repeating-linear-gradient(
+        90deg, transparent, transparent 59px,
+        rgba(31,45,69,0.3) 60px
+      );
+    pointer-events: none;
+  }
+
+  .tagline-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0,217,255,0.08);
+    border: 1px solid rgba(0,217,255,0.25);
+    border-radius: 999px;
+    padding: 6px 18px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+    width: fit-content;
+  }
+
+  .tagline-pill::before {
+    content: '▶';
+    font-size: 8px;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: clamp(36px, 6vw, 80px);
+    line-height: 1.05;
+    color: var(--heading);
+    max-width: 900px;
+    margin-bottom: 24px;
+    position: relative;
+  }
+
+  .hero h1 .accent { color: var(--accent); }
+  .hero h1 .accent2 { color: var(--accent2); }
+
+  .hero-sub {
+    font-size: clamp(16px, 2vw, 20px);
+    color: var(--muted);
+    max-width: 640px;
+    margin-bottom: 48px;
+    font-style: italic;
+    line-height: 1.6;
+  }
+
+  .hero-meta {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+
+  .hero-meta span { display: flex; align-items: center; gap: 6px; }
+  .hero-meta .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--accent); }
+
+  .stack-badges {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 36px;
+  }
+
+  .badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    padding: 5px 14px;
+    border-radius: 4px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .badge.node { background: rgba(52,211,153,0.15); color: var(--green); border: 1px solid rgba(52,211,153,0.3); }
+  .badge.tf   { background: rgba(167,139,250,0.15); color: var(--accent3); border: 1px solid rgba(167,139,250,0.3); }
+  .badge.aws  { background: rgba(251,191,36,0.12);  color: var(--yellow); border: 1px solid rgba(251,191,36,0.3); }
+  .badge.gh   { background: rgba(0,217,255,0.1);    color: var(--accent); border: 1px solid rgba(0,217,255,0.25); }
+
+  /* ── LAYOUT ── */
+  .container {
+    max-width: 840px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  .wide-container {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ── TOC ── */
+  .toc-section {
+    padding: 60px 5vw;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .toc-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .toc-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .toc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+  }
+
+  .toc-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 18px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    text-decoration: none;
+    color: var(--text);
+    transition: border-color 0.2s, background 0.2s;
+    font-size: 14px;
+  }
+
+  .toc-item:hover {
+    border-color: var(--accent);
+    background: rgba(0,217,255,0.04);
+    color: var(--accent);
+  }
+
+  .toc-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    background: rgba(0,217,255,0.1);
+    border-radius: 3px;
+    padding: 2px 7px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* ── ARTICLE BODY ── */
+  .article-body {
+    padding: 80px 24px;
+    max-width: 840px;
+    margin: 0 auto;
+  }
+
+  /* Section headers */
+  .section {
+    margin-bottom: 80px;
+  }
+
+  .section-eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  h2 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: clamp(26px, 4vw, 38px);
+    color: var(--heading);
+    line-height: 1.15;
+    margin-bottom: 28px;
+    padding-top: 20px;
+    border-top: 2px solid var(--accent);
+  }
+
+  h3 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: clamp(20px, 3vw, 26px);
+    color: var(--heading);
+    margin: 44px 0 16px;
+    padding-left: 14px;
+    border-left: 3px solid var(--accent2);
+    line-height: 1.2;
+  }
+
+  h4 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 18px;
+    color: var(--text);
+    margin: 32px 0 12px;
+  }
+
+  p { margin-bottom: 20px; }
+
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  strong { color: var(--heading); font-weight: 600; }
+  em { color: var(--accent3); font-style: italic; }
+
+  ul, ol {
+    margin: 16px 0 24px 0;
+    padding-left: 0;
+    list-style: none;
+  }
+
+  ul li, ol li {
+    position: relative;
+    padding: 6px 0 6px 26px;
+    border-bottom: 1px solid rgba(31,45,69,0.5);
+    font-size: 16px;
+  }
+
+  ul li::before {
+    content: '›';
+    position: absolute;
+    left: 6px;
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 18px;
+    line-height: 1.4;
+  }
+
+  ol { counter-reset: step; }
+  ol li { counter-increment: step; }
+  ol li::before {
+    content: counter(step, decimal-leading-zero);
+    position: absolute;
+    left: 0;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    top: 10px;
+    line-height: 1;
+  }
+
+  /* ── CALLOUT BOXES ── */
+  .callout {
+    margin: 32px 0;
+    padding: 20px 24px;
+    border-radius: 6px;
+    border-left: 4px solid;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  .callout.info {
+    background: rgba(0,217,255,0.06);
+    border-color: var(--accent);
+    color: var(--text);
+  }
+
+  .callout.warn {
+    background: rgba(251,191,36,0.06);
+    border-color: var(--yellow);
+    color: var(--text);
+  }
+
+  .callout.tip {
+    background: rgba(52,211,153,0.06);
+    border-color: var(--green);
+    color: var(--text);
+  }
+
+  .callout.danger {
+    background: rgba(255,107,53,0.07);
+    border-color: var(--accent2);
+    color: var(--text);
+  }
+
+  .callout-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .callout.info .callout-title { color: var(--accent); }
+  .callout.warn .callout-title { color: var(--yellow); }
+  .callout.tip .callout-title  { color: var(--green); }
+  .callout.danger .callout-title { color: var(--accent2); }
+
+  /* ── TAKEAWAY CARDS ── */
+  .takeaway-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--accent);
+    border-radius: 6px;
+    padding: 28px 32px;
+    margin: 40px 0;
+  }
+
+  .takeaway-box h4 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 16px 0;
+  }
+
+  .takeaway-box ul li {
+    border-bottom: 1px solid rgba(31,45,69,0.6);
+  }
+
+  /* ── CODE BLOCKS ── */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 24px 0;
+    position: relative;
+  }
+
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: rgba(31,45,69,0.5);
+    border-bottom: 1px solid var(--border);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  .code-lang {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .code-dots { display: flex; gap: 5px; }
+  .code-dots span {
+    width: 9px; height: 9px; border-radius: 50%;
+  }
+  .code-dots span:nth-child(1) { background: #ff5f57; }
+  .code-dots span:nth-child(2) { background: #ffbd2e; }
+  .code-dots span:nth-child(3) { background: #28ca41; }
+
+  pre code {
+    display: block;
+    padding: 20px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13.5px;
+    line-height: 1.65;
+    color: #c9d1d9;
+    tab-size: 2;
+  }
+
+  code {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    background: rgba(0,217,255,0.08);
+    color: var(--accent);
+    padding: 1px 6px;
+    border-radius: 3px;
+    border: 1px solid rgba(0,217,255,0.15);
+  }
+
+  pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #c9d1d9;
+    font-size: 13.5px;
+  }
+
+  /* Syntax coloring */
+  .kw  { color: #ff79c6; }
+  .str { color: #f1fa8c; }
+  .cm  { color: #6272a4; font-style: italic; }
+  .fn  { color: #50fa7b; }
+  .var { color: #8be9fd; }
+  .num { color: #bd93f9; }
+  .op  { color: #ff79c6; }
+  .attr{ color: #50fa7b; }
+  .val { color: #f1fa8c; }
+
+  /* ── ARCH DIAGRAM ── */
+  .arch-diagram {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 32px;
+    margin: 32px 0;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #c9d1d9;
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  /* ── TOPIC CARDS ── */
+  .topics-section {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 72px 5vw;
+    margin: 60px 0;
+  }
+
+  .topics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 14px;
+    margin-top: 28px;
+  }
+
+  .topic-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px 16px;
+    text-align: center;
+    transition: border-color 0.2s, transform 0.2s;
+    cursor: default;
+  }
+
+  .topic-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-3px);
+  }
+
+  .topic-icon {
+    font-size: 24px;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .topic-card h5 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--heading);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1.3;
+    margin-bottom: 6px;
+  }
+
+  .topic-card p {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+    margin: 0;
+  }
+
+  /* ── HASHTAGS ── */
+  .hashtag-section {
+    padding: 60px 5vw;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+  }
+
+  .hashtag-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 24px;
+  }
+
+  .hashtag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    padding: 7px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    transition: all 0.2s;
+    cursor: default;
+  }
+
+  .hashtag:hover { border-color: var(--accent); color: var(--accent); }
+  .hashtag.primary { border-color: rgba(0,217,255,0.4); color: var(--accent); background: rgba(0,217,255,0.06); }
+  .hashtag.secondary { border-color: rgba(167,139,250,0.4); color: var(--accent3); background: rgba(167,139,250,0.06); }
+  .hashtag.tertiary { border-color: rgba(52,211,153,0.4); color: var(--green); background: rgba(52,211,153,0.06); }
+
+  /* ── DIVIDER ── */
+  .section-divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 56px 0;
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .section-divider::before, .section-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    padding: 48px 5vw;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: gap;
+    gap: 20px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .footer-brand {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    color: var(--heading);
+  }
+
+  .footer-brand span { color: var(--accent); }
+
+  /* ── PULL QUOTES ── */
+  blockquote {
+    margin: 40px 0;
+    padding: 24px 32px;
+    border-left: 4px solid var(--accent3);
+    background: rgba(167,139,250,0.05);
+    border-radius: 0 6px 6px 0;
+    font-size: 20px;
+    font-style: italic;
+    color: var(--heading);
+    line-height: 1.5;
+  }
+
+  blockquote cite {
+    display: block;
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--muted);
+    font-style: normal;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  /* ── TABLE ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 28px 0;
+    font-size: 14px;
+  }
+
+  th {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    background: var(--surface2);
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 2px solid var(--accent);
+  }
+
+  td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    font-size: 14px;
+  }
+
+  tr:nth-child(even) td { background: rgba(26,34,53,0.4); }
+
+  /* ── STEP BLOCKS ── */
+  .step-block {
+    display: flex;
+    gap: 20px;
+    margin: 28px 0;
+    align-items: flex-start;
+  }
+
+  .step-num {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(0,217,255,0.1);
+    border: 2px solid var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--accent);
+  }
+
+  .step-content { flex: 1; }
+  .step-content h4 { margin-top: 6px; }
+
+  /* ── responsive ── */
+  @media (max-width: 600px) {
+    .hero h1 { font-size: 32px; }
+    .code-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .arch-diagram { font-size: 11px; padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════ HERO ═══════════════════════════ -->
+<header class="hero">
+  <div class="tagline-pill">DevOps Deep Dive · Infrastructure as Code · CI/CD</div>
+  <h1>
+    <span class="accent">Ship It Right:</span><br>
+    Node.js → AWS<br>
+    with <span class="accent2">Terraform</span><br>
+    & GitHub Actions
+  </h1>
+  <p class="hero-sub">
+    Stop clicking through the AWS console. Here's the complete, production-ready playbook to provision your cloud, containerize your app, and automate every deploy — from zero to live.
+  </p>
+  <div class="hero-meta">
+    <span><span class="dot"></span>DevOps Engineer Audience</span>
+    <span><span class="dot"></span>~45 min read</span>
+    <span><span class="dot"></span>Full Code Examples Included</span>
+    <span><span class="dot"></span>May 2026</span>
+  </div>
+  <div class="stack-badges">
+    <span class="badge node">Node.js 22</span>
+    <span class="badge tf">Terraform 1.8</span>
+    <span class="badge aws">AWS ECS / ECR</span>
+    <span class="badge gh">GitHub Actions</span>
+  </div>
+</header>
+
+<!-- ═══════════════════════════ TOC ═══════════════════════════ -->
+<section class="toc-section">
+  <div class="toc-label">Table of Contents</div>
+  <div class="toc-grid">
+    <a href="#s1" class="toc-item"><span class="toc-num">01</span>Why This Stack Wins</a>
+    <a href="#s2" class="toc-item"><span class="toc-num">02</span>Architecture Blueprint</a>
+    <a href="#s3" class="toc-item"><span class="toc-num">03</span>The Node.js App</a>
+    <a href="#s4" class="toc-item"><span class="toc-num">04</span>Dockerize It Right</a>
+    <a href="#s5" class="toc-item"><span class="toc-num">05</span>Terraform: The Foundation</a>
+    <a href="#s6" class="toc-item"><span class="toc-num">06</span>Terraform: ECS + ALB</a>
+    <a href="#s7" class="toc-item"><span class="toc-num">07</span>GitHub Actions Pipeline</a>
+    <a href="#s8" class="toc-item"><span class="toc-num">08</span>Secrets & IAM Right-Sizing</a>
+    <a href="#s9" class="toc-item"><span class="toc-num">09</span>Monitoring & Observability</a>
+    <a href="#s10" class="toc-item"><span class="toc-num">10</span>Multi-Env: Dev/Stage/Prod</a>
+    <a href="#s11" class="toc-item"><span class="toc-num">11</span>Rollback & Zero-Downtime</span></a>
+    <a href="#s12" class="toc-item"><span class="toc-num">12</span>Cost Controls & Cleanup</a>
+    <a href="#s13" class="toc-item"><span class="toc-num">13</span>Troubleshooting Guide</a>
+    <a href="#s14" class="toc-item"><span class="toc-num">14</span>What's Next</a>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ ARTICLE BODY ═══════════════════════════ -->
+<article class="article-body">
+
+<!-- INTRO -->
+<div class="section">
+  <p>
+    Let's skip the fluff. You've got a Node.js app. You want it on AWS. You want infrastructure you can version-control, tear down, and rebuild in minutes. And you want every merge to <code>main</code> to automatically ship — no manual steps, no missed configs, no 2 AM console clicking.
+  </p>
+  <p>
+    That's exactly what this guide builds. By the end, you'll have a complete, production-grade deployment pipeline using <strong>Terraform for infrastructure</strong>, <strong>Docker for packaging</strong>, <strong>AWS ECS Fargate for container orchestration</strong>, and <strong>GitHub Actions for CI/CD automation</strong>. Everything is real code you can copy, adapt, and own.
+  </p>
+
+  <blockquote>
+    "The best infrastructure is one you can rebuild from scratch in 20 minutes — because at some point, you'll have to."
+    <cite>— Every on-call engineer, eventually</cite>
+  </blockquote>
+
+  <div class="takeaway-box">
+    <h4>⚡ What You'll Build</h4>
+    <ul>
+      <li>A production Node.js REST API containerized with Docker</li>
+      <li>VPC, subnets, security groups, and ECR — all provisioned by Terraform</li>
+      <li>ECS Fargate cluster with an Application Load Balancer</li>
+      <li>GitHub Actions pipeline: test → build → push → deploy, on every push</li>
+      <li>Secrets management via AWS Secrets Manager + SSM Parameter Store</li>
+      <li>CloudWatch logging and basic alerting</li>
+      <li>Multi-environment setup: dev, staging, prod with Terraform workspaces</li>
+      <li>Zero-downtime rolling deployments and one-command rollback</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ────────────────────────── SECTION 1 ────────────────────────── -->
+<div class="section" id="s1">
+  <div class="section-eyebrow">Section 01</div>
+  <h2>Why This Stack Wins</h2>
+
+  <p>
+    Before writing a single line of Terraform, it's worth understanding <em>why</em> this particular combination of tools is the right call for 90% of production Node.js workloads in 2026.
+  </p>
+
+  <h3>The Old Way: Pain Points You Already Know</h3>
+  <p>
+    The classic deployment story goes like this: SSH into an EC2 instance, <code>git pull</code>, pray <code>npm install</code> doesn't break, <code>pm2 restart app</code>, and hope nothing changed in the environment since last time. It works — until it doesn't. Snowflake servers accumulate undocumented tweaks. Rollbacks are a nightmare. Scaling means manually launching more instances and running setup scripts by hand.
+  </p>
+  <p>
+    Even "better" approaches like baking AMIs or using Elastic Beanstalk improve some of this, but they introduce their own friction: slow feedback loops, opaque configuration, and limited control over the underlying infra.
+  </p>
+
+  <h3>The Modern Way: Infrastructure as Code + Containers + GitOps</h3>
+  <p>
+    The stack in this guide flips every one of those problems:
+  </p>
+
+  <table>
+    <tr>
+      <th>Old Problem</th>
+      <th>This Stack's Solution</th>
+    </tr>
+    <tr>
+      <td>Snowflake servers</td>
+      <td>Immutable Docker images — same everywhere, always</td>
+    </tr>
+    <tr>
+      <td>Manual deploys</td>
+      <td>GitHub Actions triggers on every push to <code>main</code></td>
+    </tr>
+    <tr>
+      <td>Config drift</td>
+      <td>Terraform state tracks every infrastructure resource</td>
+    </tr>
+    <tr>
+      <td>Rollbacks = pain</td>
+      <td>Previous task definition revision re-deployed in one command</td>
+    </tr>
+    <tr>
+      <td>Scaling = manual</td>
+      <td>ECS auto-scaling policies adjust desired count automatically</td>
+    </tr>
+    <tr>
+      <td>"Works on my machine"</td>
+      <td>Docker ensures dev ≈ staging ≈ prod parity</td>
+    </tr>
+    <tr>
+      <td>Security? What creds?</td>
+      <td>IAM roles, no static keys; OIDC for GitHub→AWS trust</td>
+    </tr>
+  </table>
+
+  <h3>Why ECS Fargate Over EKS?</h3>
+  <p>
+    Kubernetes is powerful, but for most teams it's overcomplicated for running a Node.js API. ECS Fargate gives you container orchestration without managing control planes or worker nodes. You define a task definition, ECS runs the container on managed compute, and you pay per vCPU/memory-second. It's the right level of abstraction for most production apps.
+  </p>
+  <p>
+    When you outgrow ECS Fargate — and you'll know when — the Terraform patterns here translate cleanly to EKS. So you're not painting yourself into a corner.
+  </p>
+
+  <h3>Why Terraform Over AWS CDK, CloudFormation, or Pulumi?</h3>
+  <p>
+    Terraform's HCL is declarative, readable, and well-understood by essentially every DevOps engineer you'll hire. The provider ecosystem is mature and comprehensive. State management is battle-tested. The <code>plan</code>/<code>apply</code> workflow makes infrastructure changes auditable and reviewable. AWS CDK is excellent if your team is TypeScript-native and prefers imperative code; CloudFormation is verbose and YAML-heavy; Pulumi is great but has a smaller community. Terraform is the pragmatic choice for a mixed team or any organization that values broad tooling knowledge over language-specific patterns.
+  </p>
+
+  <div class="takeaway-box">
+    <h4>📌 Section Takeaways</h4>
+    <ul>
+      <li>Immutable containers + IaC eliminate the "snowflake server" problem permanently</li>
+      <li>ECS Fargate is the right container orchestration for most Node.js APIs</li>
+      <li>Terraform's plan/apply loop makes infrastructure changes safe and reviewable</li>
+      <li>GitHub Actions OIDC eliminates static AWS access keys from your CI pipeline</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ────────────────────────── SECTION 2 ────────────────────────── -->
+<div class="section" id="s2">
+  <div class="section-eyebrow">Section 02</div>
+  <h2>Architecture Blueprint</h2>
+
+  <p>
+    Here's the full system at a glance. Every box in this diagram will be provisioned by Terraform or orchestrated by GitHub Actions.
+  </p>
+
+<div class="arch-diagram">
+┌─────────────────────────────────────────────────────────────────────┐
+│                          GitHub Repository                          │
+│                                                                     │
+│   ┌──────────────┐    push to main    ┌──────────────────────────┐  │
+│   │  Developer   │ ──────────────────▶│    GitHub Actions CI/CD  │  │
+│   │  Workstation │                    │                          │  │
+│   └──────────────┘                    │  1. npm test             │  │
+│                                       │  2. docker build         │  │
+│                                       │  3. docker push → ECR    │  │
+│                                       │  4. ecs update-service   │  │
+│                                       └──────────┬───────────────┘  │
+└──────────────────────────────────────────────────┼──────────────────┘
+                                                   │ OIDC → IAM Role
+                                                   ▼
+┌─────────────────────── AWS Account ──────────────────────────────────┐
+│                                                                      │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │                        VPC (10.0.0.0/16)                     │   │
+│  │                                                              │   │
+│  │  ┌─────────────────────┐    ┌─────────────────────────┐     │   │
+│  │  │  Public Subnet AZ-a │    │   Public Subnet AZ-b    │     │   │
+│  │  │  10.0.1.0/24        │    │   10.0.2.0/24           │     │   │
+│  │  │                     │    │                         │     │   │
+│  │  │  ┌───────────────┐  │    │  ┌───────────────────┐  │     │   │
+│  │  │  │      ALB      │  │    │  │       ALB         │  │     │   │
+│  │  │  │  (port 80/443)│  │    │  │    (port 80/443)  │  │     │   │
+│  │  │  └───────┬───────┘  │    │  └─────────┬─────────┘  │     │   │
+│  │  └──────────┼──────────┘    └────────────┼────────────┘     │   │
+│  │             │                            │                   │   │
+│  │  ┌──────────▼──────────────────────────▼──────────────┐     │   │
+│  │  │            Private Subnets (10.0.3.0/24, etc.)     │     │   │
+│  │  │                                                    │     │   │
+│  │  │         ┌─────────────────────────────┐            │     │   │
+│  │  │         │      ECS Fargate Cluster    │            │     │   │
+│  │  │         │                             │            │     │   │
+│  │  │         │  ┌──────────┐ ┌──────────┐  │            │     │   │
+│  │  │         │  │ Task 1   │ │ Task 2   │  │            │     │   │
+│  │  │         │  │ Node.js  │ │ Node.js  │  │            │     │   │
+│  │  │         │  │ :3000    │ │ :3000    │  │            │     │   │
+│  │  │         │  └──────────┘ └──────────┘  │            │     │   │
+│  │  │         └─────────────────────────────┘            │     │   │
+│  │  │                      │                             │     │   │
+│  │  │    ┌─────────────────┼────────────┐                │     │   │
+│  │  │    │                 │            │                │     │   │
+│  │  │  ┌─▼──────────┐  ┌───▼──────┐  ┌─▼──────────┐    │     │   │
+│  │  │  │  RDS/Aurora│  │Secrets   │  │  CloudWatch│    │     │   │
+│  │  │  │  Postgres  │  │Manager   │  │  Logs+Alarms│   │     │   │
+│  │  │  └────────────┘  └──────────┘  └────────────┘    │     │   │
+│  │  └───────────────────────────────────────────────────┘     │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+│                                                                      │
+│  ┌────────────────────────────────┐                                  │
+│  │   ECR (Elastic Container Reg) │ ◀── docker push from GH Actions  │
+│  └────────────────────────────────┘                                  │
+└──────────────────────────────────────────────────────────────────────┘
+</div>
+
+  <h3>Key Architectural Decisions</h3>
+
+  <p><strong>Private subnets for ECS tasks.</strong> Your containers never get a public IP. Traffic flows in through the ALB (which lives in public subnets), and outbound traffic from containers goes through a NAT Gateway. This is proper defense-in-depth.</p>
+
+  <p><strong>Multi-AZ from day one.</strong> The ALB and ECS tasks are distributed across two Availability Zones. If one AZ has an outage, your app keeps running. This isn't optional for production.</p>
+
+  <p><strong>ECR as your private image registry.</strong> AWS ECR integrates natively with IAM, ECS, and your GitHub Actions workflow. No DockerHub rate limits, no external registry to manage.</p>
+
+  <p><strong>GitHub OIDC for CI/CD credentials.</strong> No static AWS access keys stored in GitHub Secrets. Instead, GitHub Actions requests a short-lived token via OIDC that assumes an IAM role. It's the right way to do this in 2026.</p>
+
+  <div class="callout info">
+    <div class="callout-title">💡 Prerequisites Checklist</div>
+    <ul style="margin:0">
+      <li>AWS account with admin access (or a permission set that covers VPC, ECS, ECR, IAM, CloudWatch)</li>
+      <li>Terraform ≥ 1.7 installed locally</li>
+      <li>AWS CLI v2 configured (<code>aws configure</code>)</li>
+      <li>Docker Desktop running locally</li>
+      <li>Node.js 20+ for local development</li>
+      <li>GitHub repository for your project</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ────────────────────────── SECTION 3 ────────────────────────── -->
+<div class="section" id="s3">
+  <div class="section-eyebrow">Section 03</div>
+  <h2>The Node.js Application</h2>
+
+  <p>
+    We'll use a realistic Express API as our deployment target — one with proper health check endpoints, environment-aware config, structured logging, and a database connection. Not just a hello-world.
+  </p>
+
+  <h3>Project Structure</h3>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">SHELL — Project Layout</span>
+</div>
+<pre><code>my-api/
+├── src/
+│   ├── app.js           # Express app setup
+│   ├── server.js        # Entry point
+│   ├── routes/
+│   │   ├── health.js    # /health and /ready endpoints
+│   │   ├── users.js     # Business logic routes
+│   │   └── index.js     # Route aggregator
+│   ├── middleware/
+│   │   ├── errorHandler.js
+│   │   └── requestLogger.js
+│   ├── config/
+│   │   └── index.js     # Environment-aware config
+│   └── db/
+│       └── client.js    # DB connection pool
+├── test/
+│   ├── unit/
+│   └── integration/
+├── Dockerfile
+├── .dockerignore
+├── package.json
+└── package-lock.json</code></pre>
+
+  <h3>package.json</h3>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">JSON — package.json</span>
+</div>
+<pre><code>{
+  <span class="attr">"name"</span>: <span class="str">"my-api"</span>,
+  <span class="attr">"version"</span>: <span class="str">"1.0.0"</span>,
+  <span class="attr">"description"</span>: <span class="str">"Production Node.js REST API"</span>,
+  <span class="attr">"main"</span>: <span class="str">"src/server.js"</span>,
+  <span class="attr">"engines"</span>: {
+    <span class="attr">"node"</span>: <span class="str">">=20.0.0"</span>
+  },
+  <span class="attr">"scripts"</span>: {
+    <span class="attr">"start"</span>: <span class="str">"node src/server.js"</span>,
+    <span class="attr">"dev"</span>: <span class="str">"nodemon src/server.js"</span>,
+    <span class="attr">"test"</span>: <span class="str">"jest --coverage --forceExit"</span>,
+    <span class="attr">"test:unit"</span>: <span class="str">"jest test/unit"</span>,
+    <span class="attr">"test:integration"</span>: <span class="str">"jest test/integration"</span>,
+    <span class="attr">"lint"</span>: <span class="str">"eslint src/"</span>
+  },
+  <span class="attr">"dependencies"</span>: {
+    <span class="attr">"express"</span>: <span class="str">"^4.19.2"</span>,
+    <span class="attr">"pg"</span>: <span class="str">"^8.11.3"</span>,
+    <span class="attr">"dotenv"</span>: <span class="str">"^16.4.5"</span>,
+    <span class="attr">"pino"</span>: <span class="str">"^9.2.0"</span>,
+    <span class="attr">"pino-http"</span>: <span class="str">"^10.2.0"</span>,
+    <span class="attr">"helmet"</span>: <span class="str">"^7.1.0"</span>,
+    <span class="attr">"compression"</span>: <span class="str">"^1.7.4"</span>,
+    <span class="attr">"express-rate-limit"</span>: <span class="str">"^7.2.0"</span>
+  },
+  <span class="attr">"devDependencies"</span>: {
+    <span class="attr">"jest"</span>: <span class="str">"^29.7.0"</span>,
+    <span class="attr">"supertest"</span>: <span class="str">"^7.0.0"</span>,
+    <span class="attr">"nodemon"</span>: <span class="str">"^3.1.3"</span>,
+    <span class="attr">"eslint"</span>: <span class="str">"^8.57.0"</span>
+  }
+}</code></pre>
+
+  <h3>src/config/index.js — Environment Config</h3>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">JavaScript — src/config/index.js</span>
+</div>
+<pre><code><span class="cm">// Load .env only in local development</span>
+<span class="kw">if</span> (process.env.NODE_ENV !== <span class="str">'production'</span>) {
+  <span class="fn">require</span>(<span class="str">'dotenv'</span>).config();
+}
+
+<span class="kw">const</span> <span class="var">config</span> = {
+  env:  process.env.NODE_ENV || <span class="str">'development'</span>,
+  port: <span class="fn">parseInt</span>(process.env.PORT, <span class="num">10</span>) || <span class="num">3000</span>,
+
+  db: {
+    host:     process.env.DB_HOST,
+    port:     <span class="fn">parseInt</span>(process.env.DB_PORT, <span class="num">10</span>) || <span class="num">5432</span>,
+    name:     process.env.DB_NAME,
+    user:     process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    poolMin:  <span class="fn">parseInt</span>(process.env.DB_POOL_MIN, <span class="num">10</span>) || <span class="num">2</span>,
+    poolMax:  <span class="fn">parseInt</span>(process.env.DB_POOL_MAX, <span class="num">10</span>) || <span class="num">10</span>,
+  },
+
+  log: {
+    level: process.env.LOG_LEVEL || <span class="str">'info'</span>,
+  },
+
+  rateLimit: {
+    windowMs: <span class="num">15</span> * <span class="num">60</span> * <span class="num">1000</span>, <span class="cm">// 15 minutes</span>
+    max:      <span class="fn">parseInt</span>(process.env.RATE_LIMIT_MAX, <span class="num">10</span>) || <span class="num">100</span>,
+  },
+};
+
+<span class="cm">// Fail fast on missing required config in production</span>
+<span class="kw">const</span> <span class="var">required</span> = [<span class="str">'DB_HOST'</span>, <span class="str">'DB_NAME'</span>, <span class="str">'DB_USER'</span>, <span class="str">'DB_PASSWORD'</span>];
+
+<span class="kw">if</span> (config.env === <span class="str">'production'</span>) {
+  <span class="var">required</span>.forEach(<span class="var">key</span> => {
+    <span class="kw">if</span> (!process.env[key]) {
+      console.error(<span class="str">`FATAL: Missing required env var: <span class="var">${key}</span>`</span>);
+      process.exit(<span class="num">1</span>);
+    }
+  });
+}
+
+module.exports = <span class="var">config</span>;</code></pre>
+
+  <h3>src/app.js — Express Application</h3>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">JavaScript — src/app.js</span>
+</div>
+<pre><code><span class="kw">const</span> <span class="var">express</span>      = <span class="fn">require</span>(<span class="str">'express'</span>);
+<span class="kw">const</span> <span class="var">helmet</span>       = <span class="fn">require</span>(<span class="str">'helmet'</span>);
+<span class="kw">const</span> <span class="var">compression</span>  = <span class="fn">require</span>(<span class="str">'compression'</span>);
+<span class="kw">const</span> <span class="var">rateLimit</span>    = <span class="fn">require</span>(<span class="str">'express-rate-limit'</span>);
+<span class="kw">const</span> <span class="var">pinoHttp</span>     = <span class="fn">require</span>(<span class="str">'pino-http'</span>);
+<span class="kw">const</span> <span class="var">config</span>       = <span class="fn">require</span>(<span class="str">'./config'</span>);
+<span class="kw">const</span> <span class="var">routes</span>       = <span class="fn">require</span>(<span class="str">'./routes'</span>);
+<span class="kw">const</span> <span class="var">errorHandler</span> = <span class="fn">require</span>(<span class="str">'./middleware/errorHandler'</span>);
+<span class="kw">const</span> { <span class="var">logger</span> }   = <span class="fn">require</span>(<span class="str">'./middleware/requestLogger'</span>);
+
+<span class="kw">const</span> <span class="var">app</span> = <span class="fn">express</span>();
+
+<span class="cm">// Security headers</span>
+app.use(<span class="fn">helmet</span>());
+
+<span class="cm">// Structured request logging</span>
+app.use(<span class="fn">pinoHttp</span>({ logger }));
+
+<span class="cm">// Gzip responses</span>
+app.use(<span class="fn">compression</span>());
+
+<span class="cm">// Body parsing</span>
+app.use(express.json({ limit: <span class="str">'10mb'</span> }));
+app.use(express.urlencoded({ extended: <span class="kw">true</span> }));
+
+<span class="cm">// Rate limiting — skip /health to not affect ALB health checks</span>
+<span class="kw">const</span> <span class="var">limiter</span> = <span class="fn">rateLimit</span>({
+  windowMs: config.rateLimit.windowMs,
+  max:      config.rateLimit.max,
+  skip:     (req) => req.path === <span class="str">'/health'</span> || req.path === <span class="str">'/ready'</span>,
+  standardHeaders: <span class="kw">true</span>,
+  legacyHeaders:   <span class="kw">false</span>,
+});
+app.use(<span class="var">limiter</span>);
+
+<span class="cm">// Routes</span>
+app.use(<span class="str">'/'</span>, <span class="var">routes</span>);
+
+<span class="cm">// Global error handler — must be last</span>
+app.use(<span class="var">errorHandler</span>);
+
+module.exports = { <span class="var">app</span>, <span class="var">logger</span> };</code></pre>
+
+  <h3>src/routes/health.js — Health & Readiness Endpoints</h3>
+
+  <div class="callout warn">
+    <div class="callout-title">⚠️ Critical: Get Health Checks Right</div>
+    ECS and the ALB use health check endpoints to decide whether a task is healthy. If your health check is wrong, ECS will keep restarting your tasks or the ALB will drain connections at the worst moment. The pattern below separates liveness from readiness — a distinction ECS doesn't enforce natively, but is good hygiene.
+  </div>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">JavaScript — src/routes/health.js</span>
+</div>
+<pre><code><span class="kw">const</span> <span class="var">router</span>  = <span class="fn">require</span>(<span class="str">'express'</span>).Router();
+<span class="kw">const</span> { <span class="var">pool</span> } = <span class="fn">require</span>(<span class="str">'../db/client'</span>);
+
+<span class="cm">// Liveness — is the process alive?</span>
+<span class="cm">// Returns 200 as long as Node is running.</span>
+<span class="cm">// ALB will route traffic here every 30 seconds.</span>
+router.get(<span class="str">'/health'</span>, (req, res) => {
+  res.status(<span class="num">200</span>).json({
+    status:    <span class="str">'ok'</span>,
+    timestamp: <span class="kw">new</span> Date().toISOString(),
+    uptime:    process.uptime(),
+    version:   process.env.APP_VERSION || <span class="str">'unknown'</span>,
+  });
+});
+
+<span class="cm">// Readiness — is the app ready to serve traffic?</span>
+<span class="cm">// Checks database connectivity. Returns 503 if not ready.</span>
+<span class="cm">// ECS task won't receive traffic until this returns 200.</span>
+router.get(<span class="str">'/ready'</span>, <span class="kw">async</span> (req, res) => {
+  <span class="kw">try</span> {
+    <span class="kw">await</span> pool.query(<span class="str">'SELECT 1'</span>);
+    res.status(<span class="num">200</span>).json({
+      status:   <span class="str">'ready'</span>,
+      database: <span class="str">'connected'</span>,
+    });
+  } <span class="kw">catch</span> (err) {
+    res.status(<span class="num">503</span>).json({
+      status:   <span class="str">'not ready'</span>,
+      database: <span class="str">'disconnected'</span>,
+      error:    err.message,
+    });
+  }
+});
+
+module.exports = <span class="var">router</span>;</code></pre>
+
+  <h3>src/server.js — Graceful Startup & Shutdown</h3>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">JavaScript — src/server.js</span>
+</div>
+<pre><code><span class="kw">const</span> { <span class="var">app</span>, <span class="var">logger</span> } = <span class="fn">require</span>(<span class="str">'./app'</span>);
+<span class="kw">const</span> <span class="var">config</span>         = <span class="fn">require</span>(<span class="str">'./config'</span>);
+
+<span class="kw">const</span> <span class="var">server</span> = app.listen(config.port, () => {
+  logger.info({ port: config.port, env: config.env },
+    <span class="str">'Server started'</span>);
+});
+
+<span class="cm">// ── Graceful shutdown ──────────────────────────────────────────────</span>
+<span class="cm">// ECS sends SIGTERM before terminating a task.</span>
+<span class="cm">// We stop accepting new connections, finish in-flight requests,</span>
+<span class="cm">// then exit cleanly. This prevents dropped requests during deploys.</span>
+
+<span class="kw">const</span> <span class="fn">shutdown</span> = (<span class="var">signal</span>) => {
+  logger.info({ signal }, <span class="str">'Shutdown signal received'</span>);
+
+  server.close((<span class="var">err</span>) => {
+    <span class="kw">if</span> (err) {
+      logger.error(err, <span class="str">'Error during shutdown'</span>);
+      process.exit(<span class="num">1</span>);
+    }
+    logger.info(<span class="str">'Server closed cleanly'</span>);
+    process.exit(<span class="num">0</span>);
+  });
+
+  <span class="cm">// Force exit after 15s if graceful shutdown stalls</span>
+  setTimeout(() => {
+    logger.error(<span class="str">'Forced shutdown after timeout'</span>);
+    process.exit(<span class="num">1</span>);
+  }, <span class="num">15_000</span>).unref();
+};
+
+process.on(<span class="str">'SIGTERM'</span>, () => <span class="fn">shutdown</span>(<span class="str">'SIGTERM'</span>));
+process.on(<span class="str">'SIGINT'</span>,  () => <span class="fn">shutdown</span>(<span class="str">'SIGINT'</span>));
+
+process.on(<span class="str">'unhandledRejection'</span>, (<span class="var">reason</span>) => {
+  logger.error({ reason }, <span class="str">'Unhandled rejection'</span>);
+  process.exit(<span class="num">1</span>);
+});</code></pre>
+
+  <div class="takeaway-box">
+    <h4>📌 Section Takeaways</h4>
+    <ul>
+      <li>Separate <code>/health</code> (liveness) from <code>/ready</code> (readiness) — ALB uses the former, ECS uses both</li>
+      <li>Handle SIGTERM for graceful shutdown — ECS sends this before killing a task</li>
+      <li>Fail fast on missing env vars in production — silent misconfigurations are hard to debug at 2 AM</li>
+      <li>Use structured JSON logging (Pino) from the start — CloudWatch Logs Insights parses it automatically</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ────────────────────────── SECTION 4 ────────────────────────── -->
+<div class="section" id="s4">
+  <div class="section-eyebrow">Section 04</div>
+  <h2>Dockerize It Right</h2>
+
+  <p>
+    A Dockerfile is not just packaging. It's also a security surface, a performance concern, and a build reproducibility guarantee. The multi-stage Dockerfile below gets all three right.
+  </p>
+
+  <h3>Dockerfile — Multi-Stage Production Build</h3>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">DOCKERFILE</span>
+</div>
+<pre><code><span class="cm"># ─── Stage 1: Dependency installation ────────────────────────────</span>
+<span class="cm"># Uses a full Node image to install deps, then discards dev layers</span>
+<span class="kw">FROM</span> node:22-alpine3.19 <span class="kw">AS</span> deps
+
+WORKDIR /app
+
+<span class="cm"># Copy only manifests first — Docker layer caching means</span>
+<span class="cm"># npm install re-runs ONLY when package*.json changes</span>
+COPY package.json package-lock.json ./
+
+RUN npm ci --omit=dev --ignore-scripts \
+    && npm cache clean --force
+
+<span class="cm"># ─── Stage 2: Test runner (only used in CI) ───────────────────────</span>
+<span class="kw">FROM</span> node:22-alpine3.19 <span class="kw">AS</span> test
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+<span class="cm"># Install ALL deps including devDependencies for tests</span>
+RUN npm ci --ignore-scripts && npm cache clean --force
+
+COPY . .
+
+RUN npm test
+
+<span class="cm"># ─── Stage 3: Production image ────────────────────────────────────</span>
+<span class="kw">FROM</span> node:22-alpine3.19 <span class="kw">AS</span> production
+
+<span class="cm"># Install security updates</span>
+RUN apk upgrade --no-cache
+
+<span class="cm"># Create non-root user — NEVER run Node as root in production</span>
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+WORKDIR /app
+
+<span class="cm"># Copy only production deps from deps stage</span>
+COPY --from=deps --chown=appuser:appgroup /app/node_modules ./node_modules
+
+<span class="cm"># Copy source code</span>
+COPY --chown=appuser:appgroup src/ ./src/
+COPY --chown=appuser:appgroup package.json ./
+
+<span class="cm"># Drop to non-root user</span>
+USER appuser
+
+<span class="cm"># Expose the port your app listens on</span>
+EXPOSE 3000
+
+<span class="cm"># Use the full path — more explicit, avoids PATH surprises</span>
+CMD ["node", "src/server.js"]
+
+<span class="cm"># Build-time metadata labels</span>
+LABEL org.opencontainers.image.title="my-api" \
+      org.opencontainers.image.version="${APP_VERSION}" \
+      org.opencontainers.image.source="https://github.com/your-org/my-api"</code></pre>
+
+  <h3>.dockerignore — Keep Your Images Lean</h3>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">.dockerignore</span>
+</div>
+<pre><code>node_modules
+.git
+.gitignore
+*.md
+.env
+.env.*
+coverage/
+.nyc_output/
+test/
+*.test.js
+*.spec.js
+Dockerfile*
+docker-compose*
+.github/
+terraform/
+*.log
+.DS_Store
+dist/</code></pre>
+
+  <h3>Build & Test Locally</h3>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">SHELL</span>
+</div>
+<pre><code><span class="cm"># Build the production image</span>
+docker build --target production -t my-api:local .
+
+<span class="cm"># Run it locally with env vars</span>
+docker run -p 3000:3000 \
+  -e NODE_ENV=production \
+  -e DB_HOST=host.docker.internal \
+  -e DB_NAME=mydb \
+  -e DB_USER=admin \
+  -e DB_PASSWORD=secret \
+  my-api:local
+
+<span class="cm"># Verify health endpoint</span>
+curl http://localhost:3000/health
+<span class="cm"># {"status":"ok","timestamp":"2026-05-22T...","uptime":1.2,"version":"unknown"}</span>
+
+<span class="cm"># Check image size — should be under 200MB</span>
+docker images my-api:local --format "{{.Size}}"</code></pre>
+
+  <div class="callout tip">
+    <div class="callout-title">✅ Pro Tip: Image Size Matters</div>
+    Alpine-based images are typically 150-200MB for a Node.js app. That matters because ECR pull time directly affects cold-start latency for new ECS tasks. If your image balloons past 500MB, look for accidentally included <code>node_modules</code> or missing <code>.dockerignore</code> entries.
+  </div>
+
+  <h3>docker-compose.yml — Local Development</h3>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">YAML — docker-compose.yml</span>
+</div>
+<pre><code><span class="attr">version</span>: <span class="str">'3.9'</span>
+
+<span class="attr">services</span>:
+  <span class="attr">api</span>:
+    <span class="attr">build</span>:
+      <span class="attr">context</span>: <span class="str">.</span>
+      <span class="attr">target</span>: <span class="str">production</span>
+    <span class="attr">ports</span>:
+      - <span class="str">"3000:3000"</span>
+    <span class="attr">environment</span>:
+      - <span class="str">NODE_ENV=development</span>
+      - <span class="str">DB_HOST=postgres</span>
+      - <span class="str">DB_PORT=5432</span>
+      - <span class="str">DB_NAME=mydb</span>
+      - <span class="str">DB_USER=admin</span>
+      - <span class="str">DB_PASSWORD=secret</span>
+    <span class="attr">depends_on</span>:
+      <span class="attr">postgres</span>:
+        <span class="attr">condition</span>: <span class="str">service_healthy</span>
+    <span class="attr">restart</span>: <span class="str">unless-stopped</span>
+
+  <span class="attr">postgres</span>:
+    <span class="attr">image</span>: <span class="str">postgres:16-alpine</span>
+    <span class="attr">environment</span>:
+      - <span class="str">POSTGRES_DB=mydb</span>
+      - <span class="str">POSTGRES_USER=admin</span>
+      - <span class="str">POSTGRES_PASSWORD=secret</span>
+    <span class="attr">ports</span>:
+      - <span class="str">"5432:5432"</span>
+    <span class="attr">volumes</span>:
+      - <span class="str">pgdata:/var/lib/postgresql/data</span>
+    <span class="attr">healthcheck</span>:
+      <span class="attr">test</span>: [<span class="str">"CMD-SHELL"</span>, <span class="str">"pg_isready -U admin -d mydb"</span>]
+      <span class="attr">interval</span>: <span class="str">5s</span>
+      <span class="attr">timeout</span>: <span class="str">5s</span>
+      <span class="attr">retries</span>: <span class="num">5</span>
+
+<span class="attr">volumes</span>:
+  <span class="attr">pgdata</span>:</code></pre>
+
+  <div class="takeaway-box">
+    <h4>📌 Section Takeaways</h4>
+    <ul>
+      <li>Multi-stage builds are non-negotiable — they separate test deps from production artifacts</li>
+      <li>Always run Node as a non-root user in production containers</li>
+      <li>Layer ordering matters: copy <code>package*.json</code> first, code second — maximizes Docker cache hits</li>
+      <li>A tight <code>.dockerignore</code> prevents test files, credentials, and git history from entering the image</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ────────────────────────── SECTION 5 ────────────────────────── -->
+<div class="section" id="s5">
+  <div class="section-eyebrow">Section 05</div>
+  <h2>Terraform: The Foundation</h2>
+
+  <p>
+    Terraform files are organized into logical modules. We'll build everything in a flat structure first (easier to understand), then show how to modularize for multi-environment use in Section 10.
+  </p>
+
+  <h3>Terraform Project Structure</h3>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">SHELL — Terraform Layout</span>
+</div>
+<pre><code>terraform/
+├── main.tf            # Root module, AWS provider config
+├── variables.tf       # Input variable declarations
+├── outputs.tf         # Output values
+├── versions.tf        # Required providers + version constraints
+├── vpc.tf             # VPC, subnets, IGW, NAT Gateway, route tables
+├── security.tf        # Security groups
+├── ecr.tf             # Elastic Container Registry
+├── ecs.tf             # ECS Cluster, Task Definition, Service
+├── alb.tf             # Application Load Balancer
+├── iam.tf             # IAM roles and policies
+├── cloudwatch.tf      # Log groups, metric alarms
+├── secrets.tf         # Secrets Manager entries
+├── rds.tf             # RDS PostgreSQL (optional)
+└── terraform.tfvars   # Variable values (gitignored for prod)</code></pre>
+
+  <h3>versions.tf — Pin Your Providers</h3>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">HCL — versions.tf</span>
+</div>
+<pre><code><span class="kw">terraform</span> {
+  required_version = <span class="str">">= 1.7.0"</span>
+
+  required_providers {
+    aws = {
+      source  = <span class="str">"hashicorp/aws"</span>
+      version = <span class="str">"~> 5.50"</span>
+    }
+    random = {
+      source  = <span class="str">"hashicorp/random"</span>
+      version = <span class="str">"~> 3.6"</span>
+    }
+  }
+
+  <span class="cm"># Remote state — use S3 backend in production</span>
+  <span class="cm"># Uncomment and fill in before running terraform init</span>
+  # backend "s3" {
+  #   bucket         = "your-terraform-state-bucket"
+  #   key            = "my-api/production/terraform.tfstate"
+  #   region         = "us-east-1"
+  #   encrypt        = true
+  #   dynamodb_table = "terraform-state-lock"
+  # }
+}</code></pre>
+
+  <h3>main.tf — Provider + Locals</h3>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">HCL — main.tf</span>
+</div>
+<pre><code><span class="kw">provider</span> <span class="str">"aws"</span> {
+  region = var.aws_region
+
+  default_tags {
+    tags = local.common_tags
+  }
+}
+
+<span class="kw">locals</span> {
+  name_prefix = <span class="str">"${var.project_name}-${var.environment}"</span>
+
+  common_tags = {
+    Project     = var.project_name
+    Environment = var.environment
+    ManagedBy   = <span class="str">"terraform"</span>
+    Owner       = var.owner
+  }
+}</code></pre>
+
+  <h3>variables.tf — Input Variables</h3>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">HCL — variables.tf</span>
+</div>
+<pre><code><span class="kw">variable</span> <span class="str">"aws_region"</span> {
+  type        = string
+  description = <span class="str">"AWS region for all resources"</span>
+  default     = <span class="str">"us-east-1"</span>
+}
+
+<span class="kw">variable</span> <span class="str">"project_name"</span> {
+  type        = string
+  description = <span class="str">"Project name used for resource naming"</span>
+}
+
+<span class="kw">variable</span> <span class="str">"environment"</span> {
+  type        = string
+  description = <span class="str">"Deployment environment (dev | staging | prod)"</span>
+
+  validation {
+    condition     = contains([<span class="str">"dev"</span>, <span class="str">"staging"</span>, <span class="str">"prod"</span>], var.environment)
+    error_message = <span class="str">"Environment must be one of: dev, staging, prod."</span>
+  }
+}
+
+<span class="kw">variable</span> <span class="str">"owner"</span> {
+  type        = string
+  description = <span class="str">"Team or person responsible for this deployment"</span>
+}
+
+<span class="kw">variable</span> <span class="str">"vpc_cidr"</span> {
+  type    = string
+  default = <span class="str">"10.0.0.0/16"</span>
+}
+
+<span class="kw">variable</span> <span class="str">"public_subnet_cidrs"</span> {
+  type    = list(string)
+  default = [<span class="str">"10.0.1.0/24"</span>, <span class="str">"10.0.2.0/24"</span>]
+}
+
+<span class="kw">variable</span> <span class="str">"private_subnet_cidrs"</span> {
+  type    = list(string)
+  default = [<span class="str">"10.0.3.0/24"</span>, <span class="str">"10.0.4.0/24"</span>]
+}
+
+<span class="kw">variable</span> <span class="str">"container_port"</span> {
+  type    = number
+  default = <span class="num">3000</span>
+}
+
+<span class="kw">variable</span> <span class="str">"container_cpu"</span> {
+  type        = number
+  description = <span class="str">"Fargate task CPU units (256=0.25vCPU, 512, 1024, 2048, 4096)"</span>
+  default     = <span class="num">512</span>
+}
+
+<span class="kw">variable</span> <span class="str">"container_memory"</span> {
+  type        = number
+  description = <span class="str">"Fargate task memory in MiB"</span>
+  default     = <span class="num">1024</span>
+}
+
+<span class="kw">variable</span> <span class="str">"desired_count"</span> {
+  type        = number
+  description = <span class="str">"Number of ECS task instances to run"</span>
+  default     = <span class="num">2</span>
+}
+
+<span class="kw">variable</span> <span class="str">"github_org"</span> {
+  type        = string
+  description = <span class="str">"GitHub organization for OIDC trust"</span>
+}
+
+<span class="kw">variable</span> <span class="str">"github_repo"</span> {
+  type        = string
+  description = <span class="str">"GitHub repository name for OIDC trust"</span>
+}</code></pre>
+
+  <h3>vpc.tf — Networking</h3>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">HCL — vpc.tf</span>
+</div>
+<pre><code><span class="cm"># Fetch available AZs in the configured region</span>
+<span class="kw">data</span> <span class="str">"aws_availability_zones"</span> <span class="str">"available"</span> {
+  state = <span class="str">"available"</span>
+}
+
+<span class="cm"># ── VPC ───────────────────────────────────────────────────────────</span>
+<span class="kw">resource</span> <span class="str">"aws_vpc"</span> <span class="str">"main"</span> {
+  cidr_block           = var.vpc_cidr
+  enable_dns_support   = <span class="kw">true</span>
+  enable_dns_hostnames = <span class="kw">true</span>
+
+  tags = { Name = <span class="str">"${local.name_prefix}-vpc"</span> }
+}
+
+<span class="cm"># ── Public Subnets (ALB lives here) ───────────────────────────────</span>
+<span class="kw">resource</span> <span class="str">"aws_subnet"</span> <span class="str">"public"</span> {
+  count             = length(var.public_subnet_cidrs)
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = var.public_subnet_cidrs[count.index]
+  availability_zone = data.aws_availability_zones.available.names[count.index]
+  map_public_ip_on_launch = <span class="kw">true</span>
+
+  tags = { Name = <span class="str">"${local.name_prefix}-public-${count.index + 1}"</span> }
+}
+
+<span class="cm"># ── Private Subnets (ECS tasks live here) ─────────────────────────</span>
+<span class="kw">resource</span> <span class="str">"aws_subnet"</span> <span class="str">"private"</span> {
+  count             = length(var.private_subnet_cidrs)
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = var.private_subnet_cidrs[count.index]
+  availability_zone = data.aws_availability_zones.available.names[count.index]
+
+  tags = { Name = <span class="str">"${local.name_prefix}-private-${count.index + 1}"</span> }
+}
+
+<span class="cm"># ── Internet Gateway ──────────────────────────────────────────────</span>
+<span class="kw">resource</span> <span class="str">"aws_internet_gateway"</span> <span class="str">"main"</span> {
+  vpc_id = aws_vpc.main.id
+  tags   = { Name = <span class="str">"${local.name_prefix}-igw"</span> }
+}
+
+<span class="cm"># ── Elastic IPs for NAT Gateways ──────────────────────────────────</span>
+<span class="kw">resource</span> <span class="str">"aws_eip"</span> <span class="str">"nat"</span> {
+  count  = length(var.public_subnet_cidrs)
+  domain = <span class="str">"vpc"</span>
+  tags   = { Name = <span class="str">"${local.name_prefix}-nat-eip-${count.index + 1}"</span> }
+}
+
+<span class="cm"># ── NAT Gateways (one per AZ for HA) ─────────────────────────────</span>
+<span class="kw">resource</span> <span class="str">"aws_nat_gateway"</span> <span class="str">"main"</span> {
+  count         = length(var.public_subnet_cidrs)
+  allocation_id = aws_eip.nat[count.index].id
+  subnet_id     = aws_subnet.public[count.index].id
+
+  tags = { Name = <span class="str">"${local.name_prefix}-nat-${count.index + 1}"</span> }
+  depends_on = [aws_internet_gateway.main]
+}
+
+<span class="cm"># ── Public Route Table ────────────────────────────────────────────</span>
+<span class="kw">resource</span> <span class="str">"aws_route_table"</span> <span class="str">"public"</span> {
+  vpc_id = aws_vpc.main.id
+
+  route {
+    cidr_block = <span class="str">"0.0.0.0/0"</span>
+    gateway_id = aws_internet_gateway.main.id
+  }
+
+  tags = { Name = <span class="str">"${local.name_prefix}-public-rt"</span> }
+}
+
+<span class="kw">resource</span> <span class="str">"aws_route_table_association"</span> <span class="str">"public"</span> {
+  count          = length(aws_subnet.public)
+  subnet_id      = aws_subnet.public[count.index].id
+  route_table_id = aws_route_table.public.id
+}
+
+<span class="cm"># ── Private Route Tables (one per AZ, each pointing to its NAT GW) ─</span>
+<span class="kw">resource</span> <span class="str">"aws_route_table"</span> <span class="str">"private"</span> {
+  count  = length(var.private_subnet_cidrs)
+  vpc_id = aws_vpc.main.id
+
+  route {
+    cidr_block     = <span class="str">"0.0.0.0/0"</span>
+    nat_gateway_id = aws_nat_gateway.main[count.index].id
+  }
+
+  tags = { Name = <span class="str">"${local.name_prefix}-private-rt-${count.index + 1}"</span> }
+}
+
+<span class="kw">resource</span> <span class="str">"aws_route_table_association"</span> <span class="str">"private"</span> {
+  count          = length(aws_subnet.private)
+  subnet_id      = aws_subnet.private[count.index].id
+  route_table_id = aws_route_table.private[count.index].id
+}</code></pre>
+
+  <h3>security.tf — Security Groups</h3>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">HCL — security.tf</span>
+</div>
+<pre><code><span class="cm"># ── ALB Security Group ────────────────────────────────────────────</span>
+<span class="kw">resource</span> <span class="str">"aws_security_group"</span> <span class="str">"alb"</span> {
+  name        = <span class="str">"${local.name_prefix}-alb-sg"</span>
+  description = <span class="str">"ALB: accept HTTP/HTTPS from the internet"</span>
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    from_port   = <span class="num">80</span>
+    to_port     = <span class="num">80</span>
+    protocol    = <span class="str">"tcp"</span>
+    cidr_blocks = [<span class="str">"0.0.0.0/0"</span>]
+    description = <span class="str">"HTTP from internet"</span>
+  }
+
+  ingress {
+    from_port   = <span class="num">443</span>
+    to_port     = <span class="num">443</span>
+    protocol    = <span class="str">"tcp"</span>
+    cidr_blocks = [<span class="str">"0.0.0.0/0"</span>]
+    description = <span class="str">"HTTPS from internet"</span>
+  }
+
+  egress {
+    from_port   = <span class="num">0</span>
+    to_port     = <span class="num">0</span>
+    protocol    = <span class="str">"-1"</span>
+    cidr_blocks = [<span class="str">"0.0.0.0/0"</span>]
+    description = <span class="str">"All outbound"</span>
+  }
+
+  tags = { Name = <span class="str">"${local.name_prefix}-alb-sg"</span> }
+}
+
+<span class="cm"># ── ECS Task Security Group ───────────────────────────────────────</span>
+<span class="kw">resource</span> <span class="str">"aws_security_group"</span> <span class="str">"ecs_tasks"</span> {
+  name        = <span class="str">"${local.name_prefix}-ecs-tasks-sg"</span>
+  description = <span class="str">"ECS tasks: accept traffic from ALB only"</span>
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    from_port       = var.container_port
+    to_port         = var.container_port
+    protocol        = <span class="str">"tcp"</span>
+    security_groups = [aws_security_group.alb.id]
+    description     = <span class="str">"From ALB only"</span>
+  }
+
+  egress {
+    from_port   = <span class="num">0</span>
+    to_port     = <span class="num">0</span>
+    protocol    = <span class="str">"-1"</span>
+    cidr_blocks = [<span class="str">"0.0.0.0/0"</span>]
+    description = <span class="str">"All outbound (for ECR pull, Secrets Manager, etc.)"</span>
+  }
+
+  tags = { Name = <span class="str">"${local.name_prefix}-ecs-tasks-sg"</span> }
+}</code></pre>
+
+  <h3>ecr.tf — Container Registry</h3>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">HCL — ecr.tf</span>
+</div>
+<pre><code><span class="kw">resource</span> <span class="str">"aws_ecr_repository"</span> <span class="str">"app"</span> {
+  name                 = <span class="str">"${local.name_prefix}"</span>
+  image_tag_mutability = <span class="str">"MUTABLE"</span>
+
+  image_scanning_configuration {
+    scan_on_push = <span class="kw">true</span>   <span class="cm"># Scans for CVEs on every push</span>
+  }
+
+  tags = { Name = <span class="str">"${local.name_prefix}-ecr"</span> }
+}
+
+<span class="cm"># Lifecycle policy: keep last 10 production images, expire untagged</span>
+<span class="kw">resource</span> <span class="str">"aws_ecr_lifecycle_policy"</span> <span class="str">"app"</span> {
+  repository = aws_ecr_repository.app.name
+
+  policy = <span class="fn">jsonencode</span>({
+    rules = [
+      {
+        rulePriority = <span class="num">1</span>
+        description  = <span class="str">"Expire untagged images after 1 day"</span>
+        selection = {
+          tagStatus   = <span class="str">"untagged"</span>
+          countType   = <span class="str">"sinceImagePushed"</span>
+          countUnit   = <span class="str">"days"</span>
+          countNumber = <span class="num">1</span>
+        }
+        action = { type = <span class="str">"expire"</span> }
+      },
+      {
+        rulePriority = <span class="num">2</span>
+        description  = <span class="str">"Keep last 10 tagged images"</span>
+        selection = {
+          tagStatus     = <span class="str">"tagged"</span>
+          tagPrefixList = [<span class="str">"v"</span>, <span class="str">"sha"</span>]
+          countType     = <span class="str">"imageCountMoreThan"</span>
+          countNumber   = <span class="num">10</span>
+        }
+        action = { type = <span class="str">"expire"</span> }
+      }
+    ]
+  })
+}</code></pre>
+
+  <div class="takeaway-box">
+    <h4>📌 Section Takeaways</h4>
+    <ul>
+      <li>Pin your Terraform provider versions — minor AWS provider updates can introduce breaking changes</li>
+      <li>Use S3 backend with DynamoDB locking for state — never use local state on a team project</li>
+      <li>One NAT Gateway per AZ is the HA-correct approach (costs more, but avoids cross-AZ traffic charges during AZ failures)</li>
+      <li>ECS tasks should live in private subnets — the ALB is their only public-facing entry point</li>
+      <li>ECR lifecycle policies prevent your registry from growing unbounded and costing money</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ────────────────────────── SECTION 6 ────────────────────────── -->
+<div class="section" id="s6">
+  <div class="section-eyebrow">Section 06</div>
+  <h2>Terraform: ECS Cluster, Tasks & ALB</h2>
+
+  <p>
+    This is the heart of the infrastructure. The ECS service pulls your Docker image, runs it as tasks in private subnets, and the ALB distributes traffic to healthy tasks.
+  </p>
+
+  <h3>iam.tf — Task Execution and Task Roles</h3>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">HCL — iam.tf</span>
+</div>
+<pre><code><span class="cm"># ── ECS Task Execution Role ───────────────────────────────────────</span>
+<span class="cm"># Used by ECS AGENT to pull images from ECR and push logs to CloudWatch</span>
+<span class="kw">resource</span> <span class="str">"aws_iam_role"</span> <span class="str">"ecs_task_execution"</span> {
+  name = <span class="str">"${local.name_prefix}-ecs-task-execution"</span>
+
+  assume_role_policy = <span class="fn">jsonencode</span>({
+    Version = <span class="str">"2012-10-17"</span>
+    Statement = [{
+      Action    = <span class="str">"sts:AssumeRole"</span>
+      Effect    = <span class="str">"Allow"</span>
+      Principal = { Service = <span class="str">"ecs-tasks.amazonaws.com"</span> }
+    }]
+  })
+}
+
+<span class="kw">resource</span> <span class="str">"aws_iam_role_policy_attachment"</span> <span class="str">"ecs_task_execution"</span> {
+  role       = aws_iam_role.ecs_task_execution.name
+  policy_arn = <span class="str">"arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"</span>
+}
+
+<span class="cm"># Allow task execution role to read secrets from Secrets Manager</span>
+<span class="kw">resource</span> <span class="str">"aws_iam_role_policy"</span> <span class="str">"ecs_task_execution_secrets"</span> {
+  name = <span class="str">"read-secrets"</span>
+  role = aws_iam_role.ecs_task_execution.id
+
+  policy = <span class="fn">jsonencode</span>({
+    Version = <span class="str">"2012-10-17"</span>
+    Statement = [{
+      Effect   = <span class="str">"Allow"</span>
+      Action   = [
+        <span class="str">"secretsmanager:GetSecretValue"</span>,
+        <span class="str">"ssm:GetParameters"</span>,
+        <span class="str">"kms:Decrypt"</span>
+      ]
+      Resource = [
+        aws_secretsmanager_secret.db_password.arn,
+        <span class="str">"arn:aws:ssm:${var.aws_region}:*:parameter/${local.name_prefix}/*"</span>
+      ]
+    }]
+  })
+}
+
+<span class="cm"># ── ECS Task Role ─────────────────────────────────────────────────</span>
+<span class="cm"># Used by your APPLICATION CODE — what permissions does your app need?</span>
+<span class="kw">resource</span> <span class="str">"aws_iam_role"</span> <span class="str">"ecs_task"</span> {
+  name = <span class="str">"${local.name_prefix}-ecs-task"</span>
+
+  assume_role_policy = <span class="fn">jsonencode</span>({
+    Version = <span class="str">"2012-10-17"</span>
+    Statement = [{
+      Action    = <span class="str">"sts:AssumeRole"</span>
+      Effect    = <span class="str">"Allow"</span>
+      Principal = { Service = <span class="str">"ecs-tasks.amazonaws.com"</span> }
+    }]
+  })
+}
+
+<span class="cm"># Add S3, SQS, DynamoDB etc. permissions HERE for your app's task role</span>
+<span class="cm"># Keep this minimal — principle of least privilege</span>
+
+<span class="cm"># ── GitHub Actions OIDC Provider ──────────────────────────────────</span>
+<span class="kw">resource</span> <span class="str">"aws_iam_openid_connect_provider"</span> <span class="str">"github"</span> {
+  url = <span class="str">"https://token.actions.githubusercontent.com"</span>
+
+  client_id_list = [<span class="str">"sts.amazonaws.com"</span>]
+
+  thumbprint_list = [
+    <span class="str">"6938fd4d98bab03faadb97b34396831e3780aea1"</span>,
+    <span class="str">"1c58a3a8518e8759bf075b76b750d4f2df264fcd"</span>
+  ]
+}
+
+<span class="cm"># IAM Role that GitHub Actions assumes via OIDC</span>
+<span class="kw">resource</span> <span class="str">"aws_iam_role"</span> <span class="str">"github_actions"</span> {
+  name = <span class="str">"${local.name_prefix}-github-actions"</span>
+
+  assume_role_policy = <span class="fn">jsonencode</span>({
+    Version = <span class="str">"2012-10-17"</span>
+    Statement = [{
+      Effect    = <span class="str">"Allow"</span>
+      Action    = <span class="str">"sts:AssumeRoleWithWebIdentity"</span>
+      Principal = {
+        Federated = aws_iam_openid_connect_provider.github.arn
+      }
+      Condition = {
+        StringEquals = {
+          <span class="str">"token.actions.githubusercontent.com:aud"</span> = <span class="str">"sts.amazonaws.com"</span>
+        }
+        StringLike = {
+          <span class="cm"># Only allow the specific repo, not all of GitHub</span>
+          <span class="str">"token.actions.githubusercontent.com:sub"</span> = <span class="str">"repo:${var.github_org}/${var.github_repo}:*"</span>
+        }
+      }
+    }]
+  })
+}
+
+<span class="cm"># Permissions the GitHub Actions role needs</span>
+<span class="kw">resource</span> <span class="str">"aws_iam_role_policy"</span> <span class="str">"github_actions"</span> {
+  name = <span class="str">"deploy-permissions"</span>
+  role = aws_iam_role.github_actions.id
+
+  policy = <span class="fn">jsonencode</span>({
+    Version = <span class="str">"2012-10-17"</span>
+    Statement = [
+      {
+        Sid    = <span class="str">"ECRAuthToken"</span>
+        Effect = <span class="str">"Allow"</span>
+        Action = <span class="str">"ecr:GetAuthorizationToken"</span>
+        Resource = <span class="str">"*"</span>
+      },
+      {
+        Sid    = <span class="str">"ECRPushPull"</span>
+        Effect = <span class="str">"Allow"</span>
+        Action = [
+          <span class="str">"ecr:BatchGetImage"</span>,
+          <span class="str">"ecr:BatchCheckLayerAvailability"</span>,
+          <span class="str">"ecr:CompleteLayerUpload"</span>,
+          <span class="str">"ecr:InitiateLayerUpload"</span>,
+          <span class="str">"ecr:PutImage"</span>,
+          <span class="str">"ecr:UploadLayerPart"</span>
+        ]
+        Resource = aws_ecr_repository.app.arn
+      },
+      {
+        Sid    = <span class="str">"ECSDeployment"</span>
+        Effect = <span class="str">"Allow"</span>
+        Action = [
+          <span class="str">"ecs:DescribeServices"</span>,
+          <span class="str">"ecs:DescribeTaskDefinition"</span>,
+          <span class="str">"ecs:RegisterTaskDefinition"</span>,
+          <span class="str">"ecs:UpdateService"</span>
+        ]
+        Resource = <span class="str">"*"</span>
+      },
+      {
+        Sid    = <span class="str">"PassExecutionRole"</span>
+        Effect = <span class="str">"Allow"</span>
+        Action = <span class="str">"iam:PassRole"</span>
+        Resource = [
+          aws_iam_role.ecs_task_execution.arn,
+          aws_iam_role.ecs_task.arn
+        ]
+      }
+    ]
+  })
+}</code></pre>
+
+  <h3>ecs.tf — Cluster, Task Definition, Service</h3>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">HCL — ecs.tf</span>
+</div>
+<pre><code><span class="cm"># ── ECS Cluster ───────────────────────────────────────────────────</span>
+<span class="kw">resource</span> <span class="str">"aws_ecs_cluster"</span> <span class="str">"main"</span> {
+  name = <span class="str">"${local.name_prefix}-cluster"</span>
+
+  setting {
+    name  = <span class="str">"containerInsights"</span>
+    value = <span class="str">"enabled"</span>
+  }
+
+  tags = { Name = <span class="str">"${local.name_prefix}-cluster"</span> }
+}
+
+<span class="kw">resource</span> <span class="str">"aws_ecs_cluster_capacity_providers"</span> <span class="str">"main"</span> {
+  cluster_name       = aws_ecs_cluster.main.name
+  capacity_providers = [<span class="str">"FARGATE"</span>, <span class="str">"FARGATE_SPOT"</span>]
+
+  default_capacity_provider_strategy {
+    capacity_provider = <span class="str">"FARGATE"</span>
+    weight            = <span class="num">1</span>
+    base              = <span class="num">1</span>
+  }
+}
+
+<span class="cm"># ── CloudWatch Log Group ──────────────────────────────────────────</span>
+<span class="kw">resource</span> <span class="str">"aws_cloudwatch_log_group"</span> <span class="str">"app"</span> {
+  name              = <span class="str">"/ecs/${local.name_prefix}"</span>
+  retention_in_days = <span class="num">30</span>
+
+  tags = { Name = <span class="str">"${local.name_prefix}-logs"</span> }
+}
+
+<span class="cm"># ── ECS Task Definition ───────────────────────────────────────────</span>
+<span class="kw">resource</span> <span class="str">"aws_ecs_task_definition"</span> <span class="str">"app"</span> {
+  family                   = <span class="str">"${local.name_prefix}-app"</span>
+  requires_compatibilities = [<span class="str">"FARGATE"</span>]
+  network_mode             = <span class="str">"awsvpc"</span>
+  cpu                      = var.container_cpu
+  memory                   = var.container_memory
+  execution_role_arn       = aws_iam_role.ecs_task_execution.arn
+  task_role_arn            = aws_iam_role.ecs_task.arn
+
+  container_definitions = <span class="fn">jsonencode</span>([
+    {
+      name  = <span class="str">"app"</span>
+      image = <span class="str">"${aws_ecr_repository.app.repository_url}:latest"</span>
+
+      portMappings = [{
+        containerPort = var.container_port
+        protocol      = <span class="str">"tcp"</span>
+      }]
+
+      environment = [
+        { name = <span class="str">"NODE_ENV"</span>,  value = <span class="str">"production"</span> },
+        { name = <span class="str">"PORT"</span>,      value = <span class="fn">tostring</span>(var.container_port) },
+        { name = <span class="str">"DB_HOST"</span>,   value = aws_db_instance.postgres.address },
+        { name = <span class="str">"DB_PORT"</span>,   value = <span class="str">"5432"</span> },
+        { name = <span class="str">"DB_NAME"</span>,   value = <span class="str">"appdb"</span> },
+        { name = <span class="str">"DB_USER"</span>,   value = <span class="str">"appuser"</span> },
+      ]
+
+      <span class="cm"># Secrets from Secrets Manager — injected as env vars at runtime</span>
+      secrets = [
+        {
+          name      = <span class="str">"DB_PASSWORD"</span>
+          valueFrom = aws_secretsmanager_secret.db_password.arn
+        }
+      ]
+
+      logConfiguration = {
+        logDriver = <span class="str">"awslogs"</span>
+        options = {
+          <span class="str">"awslogs-group"</span>         = aws_cloudwatch_log_group.app.name
+          <span class="str">"awslogs-region"</span>        = var.aws_region
+          <span class="str">"awslogs-stream-prefix"</span> = <span class="str">"ecs"</span>
+        }
+      }
+
+      healthCheck = {
+        command     = [<span class="str">"CMD-SHELL"</span>, <span class="str">"wget -q -O- http://localhost:${var.container_port}/health || exit 1"</span>]
+        interval    = <span class="num">30</span>
+        timeout     = <span class="num">10</span>
+        retries     = <span class="num">3</span>
+        startPeriod = <span class="num">60</span>
+      }
+
+      essential = <span class="kw">true</span>
+
+      <span class="cm"># Resource limits within the task</span>
+      cpu    = var.container_cpu
+      memory = var.container_memory
+    }
+  ])
+
+  tags = { Name = <span class="str">"${local.name_prefix}-task-definition"</span> }
+}
+
+<span class="cm"># ── ECS Service ───────────────────────────────────────────────────</span>
+<span class="kw">resource</span> <span class="str">"aws_ecs_service"</span> <span class="str">"app"</span> {
+  name            = <span class="str">"${local.name_prefix}-service"</span>
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.app.arn
+  desired_count   = var.desired_count
+  launch_type     = <span class="str">"FARGATE"</span>
+
+  <span class="cm"># Rolling update deployment configuration</span>
+  deployment_circuit_breaker {
+    enable   = <span class="kw">true</span>
+    rollback = <span class="kw">true</span>   <span class="cm"># Auto-rollback if deploy fails</span>
+  }
+
+  deployment_controller {
+    type = <span class="str">"ECS"</span>
+  }
+
+  network_configuration {
+    subnets          = aws_subnet.private[*].id
+    security_groups  = [aws_security_group.ecs_tasks.id]
+    assign_public_ip = <span class="kw">false</span>
+  }
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.app.arn
+    container_name   = <span class="str">"app"</span>
+    container_port   = var.container_port
+  }
+
+  depends_on = [
+    aws_lb_listener.http,
+    aws_iam_role_policy_attachment.ecs_task_execution
+  ]
+
+  <span class="cm"># Ignore task definition changes — GitHub Actions manages this</span>
+  lifecycle {
+    ignore_changes = [task_definition]
+  }
+
+  tags = { Name = <span class="str">"${local.name_prefix}-service"</span> }
+}</code></pre>
+
+  <h3>alb.tf — Application Load Balancer</h3>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">HCL — alb.tf</span>
+</div>
+<pre><code><span class="kw">resource</span> <span class="str">"aws_lb"</span> <span class="str">"main"</span> {
+  name               = <span class="str">"${local.name_prefix}-alb"</span>
+  internal           = <span class="kw">false</span>
+  load_balancer_type = <span class="str">"application"</span>
+  security_groups    = [aws_security_group.alb.id]
+  subnets            = aws_subnet.public[*].id
+
+  enable_deletion_protection = var.environment == <span class="str">"prod"</span>
+
+  access_logs {
+    bucket  = aws_s3_bucket.alb_logs.bucket
+    prefix  = <span class="str">"alb-access-logs"</span>
+    enabled = <span class="kw">true</span>
+  }
+
+  tags = { Name = <span class="str">"${local.name_prefix}-alb"</span> }
+}
+
+<span class="kw">resource</span> <span class="str">"aws_lb_target_group"</span> <span class="str">"app"</span> {
+  name        = <span class="str">"${local.name_prefix}-tg"</span>
+  port        = var.container_port
+  protocol    = <span class="str">"HTTP"</span>
+  vpc_id      = aws_vpc.main.id
+  target_type = <span class="str">"ip"</span>   <span class="cm"># Required for Fargate awsvpc networking</span>
+
+  health_check {
+    enabled             = <span class="kw">true</span>
+    healthy_threshold   = <span class="num">2</span>
+    unhealthy_threshold = <span class="num">3</span>
+    timeout             = <span class="num">10</span>
+    interval            = <span class="num">30</span>
+    path                = <span class="str">"/health"</span>
+    matcher             = <span class="str">"200"</span>
+    protocol            = <span class="str">"HTTP"</span>
+  }
+
+  deregistration_delay = <span class="num">30</span>
+
+  tags = { Name = <span class="str">"${local.name_prefix}-tg"</span> }
+}
+
+<span class="cm"># HTTP listener — redirects to HTTPS in production</span>
+<span class="kw">resource</span> <span class="str">"aws_lb_listener"</span> <span class="str">"http"</span> {
+  load_balancer_arn = aws_lb.main.arn
+  port              = <span class="str">"80"</span>
+  protocol          = <span class="str">"HTTP"</span>
+
+  default_action {
+    type = var.environment == <span class="str">"prod"</span> ? <span class="str">"redirect"</span> : <span class="str">"forward"</span>
+
+    dynamic <span class="str">"redirect"</span> {
+      for_each = var.environment == <span class="str">"prod"</span> ? [<span class="num">1</span>] : []
+      content {
+        port        = <span class="str">"443"</span>
+        protocol    = <span class="str">"HTTPS"</span>
+        status_code = <span class="str">"HTTP_301"</span>
+      }
+    }
+
+    dynamic <span class="str">"forward"</span> {
+      for_each = var.environment != <span class="str">"prod"</span> ? [<span class="num">1</span>] : []
+      content {
+        target_group {
+          arn    = aws_lb_target_group.app.arn
+          weight = <span class="num">1</span>
+        }
+      }
+    }
+  }
+}</code></pre>
+
+  <h3>outputs.tf — Useful Values</h3>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">HCL — outputs.tf</span>
+</div>
+<pre><code><span class="kw">output</span> <span class="str">"alb_dns_name"</span> {
+  value       = aws_lb.main.dns_name
+  description = <span class="str">"ALB DNS name — point your domain CNAME here"</span>
+}
+
+<span class="kw">output</span> <span class="str">"ecr_repository_url"</span> {
+  value       = aws_ecr_repository.app.repository_url
+  description = <span class="str">"ECR repository URL for docker push"</span>
+}
+
+<span class="kw">output</span> <span class="str">"ecs_cluster_name"</span> {
+  value       = aws_ecs_cluster.main.name
+}
+
+<span class="kw">output</span> <span class="str">"ecs_service_name"</span> {
+  value       = aws_ecs_service.app.name
+}
+
+<span class="kw">output</span> <span class="str">"github_actions_role_arn"</span> {
+  value       = aws_iam_role.github_actions.arn
+  description = <span class="str">"Add this ARN to GitHub Actions secret: AWS_ROLE_ARN"</span>
+  sensitive   = <span class="kw">true</span>
+}</code></pre>
+
+  <h3>First Terraform Apply</h3>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">SHELL</span>
+</div>
+<pre><code>cd terraform/
+
+<span class="cm"># Initialize — downloads providers, sets up backend</span>
+terraform init
+
+<span class="cm"># Preview what Terraform will create (read this carefully!)</span>
+terraform plan \
+  -var="project_name=my-api" \
+  -var="environment=staging" \
+  -var="owner=your-team" \
+  -var="github_org=your-org" \
+  -var="github_repo=your-repo" \
+  -out=tfplan
+
+<span class="cm"># Apply — creates ~35 AWS resources</span>
+terraform apply tfplan
+
+<span class="cm"># Capture outputs you'll need for GitHub Actions</span>
+terraform output github_actions_role_arn
+terraform output ecr_repository_url
+terraform output ecs_cluster_name
+terraform output ecs_service_name</code></pre>
+
+  <div class="callout warn">
+    <div class="callout-title">⚠️ NAT Gateway Cost Warning</div>
+    Two NAT Gateways cost approximately $64/month each in us-east-1 ($0.045/hour × 2 × 730 hours) plus data transfer. For dev environments, use a single NAT Gateway or NAT instance. The Terraform variable <code>var.environment</code> can gate this decision.
+  </div>
+
+  <div class="takeaway-box">
+    <h4>📌 Section Takeaways</h4>
+    <ul>
+      <li>Two IAM roles per ECS service: Task Execution Role (for ECS agent) and Task Role (for your app code) — keep them separate and minimal</li>
+      <li>GitHub OIDC is the right way to give CI/CD access to AWS — no static keys, ever</li>
+      <li><code>lifecycle { ignore_changes = [task_definition] }</code> is critical — without it, Terraform will fight GitHub Actions over task definition control</li>
+      <li>Enable ECS Deployment Circuit Breaker with rollback — it auto-reverts failed deployments</li>
+      <li>Set <code>deregistration_delay = 30</code> on your target group to match your SIGTERM graceful shutdown window</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ────────────────────────── SECTION 7 ────────────────────────── -->
+<div class="section" id="s7">
+  <div class="section-eyebrow">Section 07</div>
+  <h2>GitHub Actions: The CI/CD Pipeline</h2>
+
+  <p>
+    This is where everything comes together. The pipeline runs on every push to <code>main</code>, and on pull requests (test-only, no deploy). Every step has a purpose — nothing is cargo-culted in.
+  </p>
+
+  <h3>GitHub Secrets to Configure</h3>
+  <p>Before setting up the workflow, add these to your GitHub repository's Secrets and Variables (Settings → Secrets and variables → Actions):</p>
+
+  <table>
+    <tr>
+      <th>Secret Name</th>
+      <th>Value</th>
+      <th>Notes</th>
+    </tr>
+    <tr>
+      <td><code>AWS_ROLE_ARN</code></td>
+      <td>From <code>terraform output github_actions_role_arn</code></td>
+      <td>The OIDC role ARN Terraform created</td>
+    </tr>
+    <tr>
+      <td><code>AWS_REGION</code></td>
+      <td><code>us-east-1</code></td>
+      <td>Your deployment region</td>
+    </tr>
+    <tr>
+      <td><code>ECR_REPOSITORY_URL</code></td>
+      <td>From <code>terraform output ecr_repository_url</code></td>
+      <td>ECR repo URL without the image tag</td>
+    </tr>
+    <tr>
+      <td><code>ECS_CLUSTER_NAME</code></td>
+      <td>From <code>terraform output ecs_cluster_name</code></td>
+      <td>ECS cluster name</td>
+    </tr>
+    <tr>
+      <td><code>ECS_SERVICE_NAME</code></td>
+      <td>From <code>terraform output ecs_service_name</code></td>
+      <td>ECS service name</td>
+    </tr>
+    <tr>
+      <td><code>ECS_TASK_DEFINITION_FAMILY</code></td>
+      <td><code>my-api-staging-app</code></td>
+      <td>Task definition family name</td>
+    </tr>
+  </table>
+
+  <h3>The Main Workflow</h3>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">YAML — .github/workflows/deploy.yml</span>
+</div>
+<pre><code><span class="attr">name</span>: CI/CD Pipeline
+
+<span class="cm"># Trigger on pushes to main and all pull requests</span>
+<span class="attr">on</span>:
+  <span class="attr">push</span>:
+    <span class="attr">branches</span>: [main]
+  <span class="attr">pull_request</span>:
+    <span class="attr">branches</span>: [main]
+  <span class="attr">workflow_dispatch</span>:  <span class="cm"># Allow manual trigger</span>
+
+<span class="attr">env</span>:
+  AWS_REGION:              ${{ secrets.AWS_REGION }}
+  ECR_REPOSITORY_URL:      ${{ secrets.ECR_REPOSITORY_URL }}
+  ECS_CLUSTER:             ${{ secrets.ECS_CLUSTER_NAME }}
+  ECS_SERVICE:             ${{ secrets.ECS_SERVICE_NAME }}
+  TASK_DEFINITION_FAMILY:  ${{ secrets.ECS_TASK_DEFINITION_FAMILY }}
+  CONTAINER_NAME:          app
+
+<span class="attr">permissions</span>:
+  id-token: write   <span class="cm"># Required for OIDC JWT token</span>
+  contents: read
+  pull-requests: write
+
+<span class="attr">jobs</span>:
+
+  <span class="cm"># ─── Job 1: Run tests ─────────────────────────────────────────────</span>
+  <span class="attr">test</span>:
+    <span class="attr">name</span>: Test
+    <span class="attr">runs-on</span>: ubuntu-latest
+
+    <span class="attr">services</span>:
+      <span class="attr">postgres</span>:
+        <span class="attr">image</span>: postgres:16-alpine
+        <span class="attr">env</span>:
+          <span class="attr">POSTGRES_DB</span>: testdb
+          <span class="attr">POSTGRES_USER</span>: testuser
+          <span class="attr">POSTGRES_PASSWORD</span>: testpass
+        <span class="attr">options</span>: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        <span class="attr">ports</span>:
+          - 5432:5432
+
+    <span class="attr">steps</span>:
+      - <span class="attr">name</span>: Checkout code
+        <span class="attr">uses</span>: actions/checkout@v4
+
+      - <span class="attr">name</span>: Setup Node.js
+        <span class="attr">uses</span>: actions/setup-node@v4
+        <span class="attr">with</span>:
+          <span class="attr">node-version</span>: <span class="str">'22'</span>
+          <span class="attr">cache</span>: <span class="str">'npm'</span>   <span class="cm"># Caches node_modules between runs</span>
+
+      - <span class="attr">name</span>: Install dependencies
+        <span class="attr">run</span>: npm ci
+
+      - <span class="attr">name</span>: Run linter
+        <span class="attr">run</span>: npm run lint
+
+      - <span class="attr">name</span>: Run tests
+        <span class="attr">env</span>:
+          <span class="attr">NODE_ENV</span>: test
+          <span class="attr">DB_HOST</span>: localhost
+          <span class="attr">DB_PORT</span>: <span class="num">5432</span>
+          <span class="attr">DB_NAME</span>: testdb
+          <span class="attr">DB_USER</span>: testuser
+          <span class="attr">DB_PASSWORD</span>: testpass
+        <span class="attr">run</span>: npm test
+
+      - <span class="attr">name</span>: Upload coverage report
+        <span class="attr">uses</span>: actions/upload-artifact@v4
+        <span class="attr">if</span>: always()
+        <span class="attr">with</span>:
+          <span class="attr">name</span>: coverage
+          <span class="attr">path</span>: coverage/
+
+  <span class="cm"># ─── Job 2: Build & Push Docker image ────────────────────────────</span>
+  <span class="attr">build-and-push</span>:
+    <span class="attr">name</span>: Build & Push
+    <span class="attr">runs-on</span>: ubuntu-latest
+    <span class="attr">needs</span>: test
+    <span class="attr">if</span>: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    <span class="attr">outputs</span>:
+      image-tag: ${{ steps.meta.outputs.version }}
+      image-uri: ${{ steps.build-push.outputs.image-uri }}
+
+    <span class="attr">steps</span>:
+      - <span class="attr">name</span>: Checkout code
+        <span class="attr">uses</span>: actions/checkout@v4
+
+      - <span class="attr">name</span>: Configure AWS credentials via OIDC
+        <span class="attr">uses</span>: aws-actions/configure-aws-credentials@v4
+        <span class="attr">with</span>:
+          <span class="attr">role-to-assume</span>: ${{ secrets.AWS_ROLE_ARN }}
+          <span class="attr">aws-region</span>: ${{ env.AWS_REGION }}
+          <span class="attr">role-session-name</span>: GitHubActions-${{ github.run_id }}
+
+      - <span class="attr">name</span>: Login to Amazon ECR
+        <span class="attr">id</span>: login-ecr
+        <span class="attr">uses</span>: aws-actions/amazon-ecr-login@v2
+
+      - <span class="attr">name</span>: Set up Docker Buildx (enables build caching)
+        <span class="attr">uses</span>: docker/setup-buildx-action@v3
+
+      - <span class="attr">name</span>: Generate image metadata
+        <span class="attr">id</span>: meta
+        <span class="attr">uses</span>: docker/metadata-action@v5
+        <span class="attr">with</span>:
+          <span class="attr">images</span>: ${{ env.ECR_REPOSITORY_URL }}
+          <span class="attr">tags</span>: |
+            type=sha,prefix=sha-,format=short
+            type=raw,value=latest
+            type=raw,value=${{ github.run_number }}
+
+      - <span class="attr">name</span>: Build and push Docker image
+        <span class="attr">id</span>: build-push
+        <span class="attr">uses</span>: docker/build-push-action@v5
+        <span class="attr">with</span>:
+          <span class="attr">context</span>: .
+          <span class="attr">target</span>: production
+          <span class="attr">push</span>: <span class="kw">true</span>
+          <span class="attr">tags</span>: ${{ steps.meta.outputs.tags }}
+          <span class="attr">labels</span>: ${{ steps.meta.outputs.labels }}
+          <span class="attr">cache-from</span>: type=gha
+          <span class="attr">cache-to</span>: type=gha,mode=max
+          <span class="attr">build-args</span>: |
+            APP_VERSION=${{ github.sha }}
+
+      - <span class="attr">name</span>: Export image URI
+        <span class="attr">id</span>: export
+        <span class="attr">run</span>: |
+          echo "image-uri=${{ env.ECR_REPOSITORY_URL }}:sha-${{ github.sha }}" >> $GITHUB_OUTPUT
+
+  <span class="cm"># ─── Job 3: Deploy to ECS ─────────────────────────────────────────</span>
+  <span class="attr">deploy</span>:
+    <span class="attr">name</span>: Deploy to ECS
+    <span class="attr">runs-on</span>: ubuntu-latest
+    <span class="attr">needs</span>: build-and-push
+    <span class="attr">if</span>: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    <span class="attr">environment</span>:
+      <span class="attr">name</span>: staging     <span class="cm"># Requires manual approval for 'production' env</span>
+      <span class="attr">url</span>: ${{ steps.get-url.outputs.url }}
+
+    <span class="attr">steps</span>:
+      - <span class="attr">name</span>: Configure AWS credentials via OIDC
+        <span class="attr">uses</span>: aws-actions/configure-aws-credentials@v4
+        <span class="attr">with</span>:
+          <span class="attr">role-to-assume</span>: ${{ secrets.AWS_ROLE_ARN }}
+          <span class="attr">aws-region</span>: ${{ env.AWS_REGION }}
+
+      - <span class="attr">name</span>: Download current task definition
+        <span class="attr">run</span>: |
+          aws ecs describe-task-definition \
+            --task-definition ${{ env.TASK_DEFINITION_FAMILY }} \
+            --query taskDefinition \
+            > task-definition.json
+
+      - <span class="attr">name</span>: Update task definition with new image
+        <span class="attr">id</span>: task-def
+        <span class="attr">uses</span>: aws-actions/amazon-ecs-render-task-definition@v1
+        <span class="attr">with</span>:
+          <span class="attr">task-definition</span>: task-definition.json
+          <span class="attr">container-name</span>: ${{ env.CONTAINER_NAME }}
+          <span class="attr">image</span>: ${{ needs.build-and-push.outputs.image-uri }}
+
+      - <span class="attr">name</span>: Deploy to ECS
+        <span class="attr">uses</span>: aws-actions/amazon-ecs-deploy-task-definition@v1
+        <span class="attr">with</span>:
+          <span class="attr">task-definition</span>: ${{ steps.task-def.outputs.task-definition }}
+          <span class="attr">service</span>: ${{ env.ECS_SERVICE }}
+          <span class="attr">cluster</span>: ${{ env.ECS_CLUSTER }}
+          <span class="attr">wait-for-service-stability</span>: <span class="kw">true</span>  <span class="cm"># Waits until new tasks are healthy</span>
+          <span class="attr">force-new-deployment</span>: <span class="kw">true</span>
+
+      - <span class="attr">name</span>: Get ALB URL
+        <span class="attr">id</span>: get-url
+        <span class="attr">run</span>: |
+          URL=$(aws elbv2 describe-load-balancers \
+            --names "${{ env.ECS_CLUSTER }}-alb" \
+            --query 'LoadBalancers[0].DNSName' \
+            --output text)
+          echo "url=http://$URL" >> $GITHUB_OUTPUT
+
+      - <span class="attr">name</span>: Smoke test
+        <span class="attr">run</span>: |
+          URL="${{ steps.get-url.outputs.url }}"
+          echo "Smoke testing $URL/health"
+          for i in {1..5}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL/health")
+            if [ "$STATUS" = "200" ]; then
+              echo "✅ Health check passed"
+              exit 0
+            fi
+            echo "Attempt $i failed (status: $STATUS), retrying..."
+            sleep 10
+          done
+          echo "❌ Smoke test failed after 5 attempts"
+          exit 1</code></pre>
+
+  <div class="callout tip">
+    <div class="callout-title">✅ Pipeline Optimization: Build Caching</div>
+    The <code>cache-from: type=gha</code> and <code>cache-to: type=gha,mode=max</code> lines use GitHub Actions cache to store Docker build layers. This can cut your build time from 3-4 minutes to under 60 seconds on subsequent runs, since unchanged layers are restored from cache rather than rebuilt.
+  </div>
+
+  <h3>Pull Request Workflow — Lightweight CI</h3>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">YAML — .github/workflows/pr-checks.yml</span>
+</div>
+<pre><code><span class="attr">name</span>: PR Checks
+
+<span class="attr">on</span>:
+  <span class="attr">pull_request</span>:
+    <span class="attr">branches</span>: [main, develop]
+
+<span class="attr">jobs</span>:
+  <span class="attr">checks</span>:
+    <span class="attr">name</span>: Lint, Test & Build Check
+    <span class="attr">runs-on</span>: ubuntu-latest
+
+    <span class="attr">steps</span>:
+      - <span class="attr">uses</span>: actions/checkout@v4
+
+      - <span class="attr">uses</span>: actions/setup-node@v4
+        <span class="attr">with</span>:
+          <span class="attr">node-version</span>: <span class="str">'22'</span>
+          <span class="attr">cache</span>: <span class="str">'npm'</span>
+
+      - <span class="attr">run</span>: npm ci
+      - <span class="attr">run</span>: npm run lint
+      - <span class="attr">run</span>: npm test
+
+      <span class="cm"># Verify Docker builds successfully — catch Dockerfile errors on PR</span>
+      - <span class="attr">name</span>: Build Docker image (no push)
+        <span class="attr">uses</span>: docker/build-push-action@v5
+        <span class="attr">with</span>:
+          <span class="attr">context</span>: .
+          <span class="attr">target</span>: production
+          <span class="attr">push</span>: <span class="kw">false</span>
+
+      - <span class="attr">name</span>: Comment test results on PR
+        <span class="attr">uses</span>: actions/github-script@v7
+        <span class="attr">if</span>: always()
+        <span class="attr">with</span>:
+          <span class="attr">script</span>: |
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const body = `## CI Results\n- Lint: ✅\n- Tests: ✅\n- Docker build: ✅`;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });</code></pre>
+
+  <div class="takeaway-box">
+    <h4>📌 Section Takeaways</h4>
+    <ul>
+      <li>Jobs are chained: test → build → deploy. A test failure blocks everything — no bad code ships</li>
+      <li>Use <code>github.ref == 'refs/heads/main'</code> to gate deploys — PRs run tests only, never deploy</li>
+      <li>GitHub Actions cache for Docker layers is a massive time saver — always set it up</li>
+      <li><code>wait-for-service-stability: true</code> makes the pipeline wait for ECS to confirm healthy tasks before marking the deploy successful</li>
+      <li>Add a smoke test step after deploy — it's your last line of defense against a broken production release</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ────────────────────────── SECTION 8 ────────────────────────── -->
+<div class="section" id="s8">
+  <div class="section-eyebrow">Section 08</div>
+  <h2>Secrets & IAM: Doing It Right</h2>
+
+  <p>
+    Credentials in environment variables are a common mistake. Credentials in Git are a catastrophe. Here's the proper approach using AWS Secrets Manager integrated with ECS task definitions.
+  </p>
+
+  <h3>secrets.tf — AWS Secrets Manager</h3>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">HCL — secrets.tf</span>
+</div>
+<pre><code><span class="cm"># Create the secret in Secrets Manager</span>
+<span class="kw">resource</span> <span class="str">"aws_secretsmanager_secret"</span> <span class="str">"db_password"</span> {
+  name                    = <span class="str">"/${local.name_prefix}/db/password"</span>
+  description             = <span class="str">"Database password for ${local.name_prefix}"</span>
+  recovery_window_in_days = var.environment == <span class="str">"prod"</span> ? <span class="num">30</span> : <span class="num">0</span>
+
+  tags = { Name = <span class="str">"${local.name_prefix}-db-password"</span> }
+}
+
+<span class="cm"># The actual secret value — managed outside Terraform</span>
+<span class="cm"># Set this once via CLI or AWS Console, then Terraform won't touch it</span>
+<span class="kw">resource</span> <span class="str">"aws_secretsmanager_secret_version"</span> <span class="str">"db_password"</span> {
+  secret_id     = aws_secretsmanager_secret.db_password.id
+  secret_string = <span class="str">"PLACEHOLDER_CHANGE_ME"</span>
+
+  lifecycle {
+    ignore_changes = [secret_string]  <span class="cm"># Don't overwrite manually set values</span>
+  }
+}
+
+<span class="cm"># SSM Parameter Store for non-sensitive config</span>
+<span class="kw">resource</span> <span class="str">"aws_ssm_parameter"</span> <span class="str">"db_host"</span> {
+  name  = <span class="str">"/${local.name_prefix}/db/host"</span>
+  type  = <span class="str">"String"</span>
+  value = aws_db_instance.postgres.address
+}
+
+<span class="cm"># Set the real DB password via CLI (run this once after terraform apply)</span>
+<span class="cm"># aws secretsmanager put-secret-value \</span>
+<span class="cm">#   --secret-id "/my-api-staging/db/password" \</span>
+<span class="cm">#   --secret-string "your-real-password-here"</span></code></pre>
+
+  <h3>How Secrets Flow to Your Container</h3>
+
+  <p>
+    In the ECS task definition (shown in Section 6), the <code>secrets</code> block injects Secrets Manager values as environment variables at container startup time. The ECS agent (using the Task Execution Role) retrieves the secret value from Secrets Manager and injects it. Your application code just reads <code>process.env.DB_PASSWORD</code> — it never sees the Secrets Manager API.
+  </p>
+
+<div class="arch-diagram">
+GitHub Actions OIDC Token
+         │
+         ▼
+    AWS STS API
+         │
+         ▼ (short-lived credentials, ~1 hour)
+    IAM Role: github-actions-role
+         │
+    (allowed actions: ECR push, ECS update, iam:PassRole)
+         │
+         ▼
+    ECS Service Update
+         │
+         ▼
+    ECS Agent starts new task
+         │
+         ▼
+    Task Execution Role fetches from Secrets Manager
+         │
+         ▼ (secret value injected as env var)
+    Node.js container reads process.env.DB_PASSWORD
+</div>
+
+  <div class="callout danger">
+    <div class="callout-title">🚫 Things You Must Never Do</div>
+    <ul style="margin:0">
+      <li>Never store AWS credentials in GitHub Secrets as <code>AWS_ACCESS_KEY_ID</code> / <code>AWS_SECRET_ACCESS_KEY</code> for production — use OIDC</li>
+      <li>Never hardcode secrets in Dockerfiles, source code, or task definition JSON</li>
+      <li>Never commit <code>.env</code> files to Git — add them to <code>.gitignore</code> immediately</li>
+      <li>Never give your GitHub Actions role broad permissions like <code>AdministratorAccess</code> — scope it down to exactly what's needed</li>
+    </ul>
+  </div>
+
+  <div class="takeaway-box">
+    <h4>📌 Section Takeaways</h4>
+    <ul>
+      <li>Secrets Manager + ECS task secrets injection is the right pattern — zero code changes needed in your app</li>
+      <li>Use <code>lifecycle { ignore_changes = [secret_string] }</code> to let Terraform create the secret without controlling its value</li>
+      <li>OIDC means your CI pipeline never holds a long-lived AWS credential — tokens expire after the job completes</li>
+      <li>Keep the GitHub Actions IAM role tightly scoped: ECR push, ECS update, PassRole — nothing else</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ────────────────────────── SECTION 9 ────────────────────────── -->
+<div class="section" id="s9">
+  <div class="section-eyebrow">Section 09</div>
+  <h2>Monitoring & Observability</h2>
+
+  <p>
+    Deploying without monitoring is half a job. Here's the CloudWatch setup that gives you visibility from day one.
+  </p>
+
+  <h3>cloudwatch.tf — Alarms & Dashboards</h3>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">HCL — cloudwatch.tf</span>
+</div>
+<pre><code><span class="cm"># ── SNS Topic for alerts ──────────────────────────────────────────</span>
+<span class="kw">resource</span> <span class="str">"aws_sns_topic"</span> <span class="str">"alerts"</span> {
+  name = <span class="str">"${local.name_prefix}-alerts"</span>
+}
+
+<span class="cm"># Subscribe your team's email to alerts</span>
+<span class="kw">resource</span> <span class="str">"aws_sns_topic_subscription"</span> <span class="str">"email"</span> {
+  topic_arn = aws_sns_topic.alerts.arn
+  protocol  = <span class="str">"email"</span>
+  endpoint  = <span class="str">"your-team@company.com"</span>
+}
+
+<span class="cm"># ── ALB 5xx Error Rate Alarm ──────────────────────────────────────</span>
+<span class="kw">resource</span> <span class="str">"aws_cloudwatch_metric_alarm"</span> <span class="str">"alb_5xx"</span> {
+  alarm_name          = <span class="str">"${local.name_prefix}-alb-5xx-rate"</span>
+  comparison_operator = <span class="str">"GreaterThanThreshold"</span>
+  evaluation_periods  = <span class="num">2</span>
+  metric_name         = <span class="str">"HTTPCode_ELB_5XX_Count"</span>
+  namespace           = <span class="str">"AWS/ApplicationELB"</span>
+  period              = <span class="num">60</span>
+  statistic           = <span class="str">"Sum"</span>
+  threshold           = <span class="num">10</span>
+  alarm_description   = <span class="str">"ALB returning >10 5xx errors per minute"</span>
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+  ok_actions          = [aws_sns_topic.alerts.arn]
+  treat_missing_data  = <span class="str">"notBreaching"</span>
+
+  dimensions = {
+    LoadBalancer = aws_lb.main.arn_suffix
+  }
+}
+
+<span class="cm"># ── ECS Task Count Alarm — alerts if tasks < desired ─────────────</span>
+<span class="kw">resource</span> <span class="str">"aws_cloudwatch_metric_alarm"</span> <span class="str">"ecs_running_tasks"</span> {
+  alarm_name          = <span class="str">"${local.name_prefix}-running-tasks-low"</span>
+  comparison_operator = <span class="str">"LessThanThreshold"</span>
+  evaluation_periods  = <span class="num">2</span>
+  metric_name         = <span class="str">"RunningTaskCount"</span>
+  namespace           = <span class="str">"ECS/ContainerInsights"</span>
+  period              = <span class="num">60</span>
+  statistic           = <span class="str">"Average"</span>
+  threshold           = var.desired_count
+  alarm_description   = <span class="str">"Running ECS tasks fell below desired count"</span>
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+  treat_missing_data  = <span class="str">"breaching"</span>
+
+  dimensions = {
+    ClusterName = aws_ecs_cluster.main.name
+    ServiceName = aws_ecs_service.app.name
+  }
+}
+
+<span class="cm"># ── ALB Response Time P99 ─────────────────────────────────────────</span>
+<span class="kw">resource</span> <span class="str">"aws_cloudwatch_metric_alarm"</span> <span class="str">"alb_latency"</span> {
+  alarm_name          = <span class="str">"${local.name_prefix}-alb-p99-latency"</span>
+  comparison_operator = <span class="str">"GreaterThanThreshold"</span>
+  evaluation_periods  = <span class="num">3</span>
+  metric_name         = <span class="str">"TargetResponseTime"</span>
+  namespace           = <span class="str">"AWS/ApplicationELB"</span>
+  period              = <span class="num">60</span>
+  extended_statistic  = <span class="str">"p99"</span>
+  threshold           = <span class="num">2</span>   <span class="cm"># Alert if p99 > 2 seconds</span>
+  alarm_description   = <span class="str">"P99 response time > 2s"</span>
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+
+  dimensions = {
+    LoadBalancer = aws_lb.main.arn_suffix
+  }
+}
+
+<span class="cm"># ── CloudWatch Dashboard ──────────────────────────────────────────</span>
+<span class="kw">resource</span> <span class="str">"aws_cloudwatch_dashboard"</span> <span class="str">"main"</span> {
+  dashboard_name = <span class="str">"${local.name_prefix}-operations"</span>
+
+  dashboard_body = <span class="fn">jsonencode</span>({
+    widgets = [
+      {
+        type = <span class="str">"metric"</span>
+        properties = {
+          title   = <span class="str">"ALB Request Rate"</span>
+          metrics = [[<span class="str">"AWS/ApplicationELB"</span>, <span class="str">"RequestCount"</span>,
+            <span class="str">"LoadBalancer"</span>, aws_lb.main.arn_suffix]]
+          period  = <span class="num">60</span>
+          stat    = <span class="str">"Sum"</span>
+          view    = <span class="str">"timeSeries"</span>
+        }
+      },
+      {
+        type = <span class="str">"metric"</span>
+        properties = {
+          title   = <span class="str">"5xx Error Count"</span>
+          metrics = [[<span class="str">"AWS/ApplicationELB"</span>, <span class="str">"HTTPCode_ELB_5XX_Count"</span>,
+            <span class="str">"LoadBalancer"</span>, aws_lb.main.arn_suffix]]
+          period  = <span class="num">60</span>
+          stat    = <span class="str">"Sum"</span>
+        }
+      },
+      {
+        type = <span class="str">"log"</span>
+        properties = {
+          title   = <span class="str">"Recent Application Errors"</span>
+          query   = <span class="str">"SOURCE '/ecs/${local.name_prefix}' | fields @timestamp, @message | filter level = 'error' | sort @timestamp desc | limit 50"</span>
+          region  = var.aws_region
+          view    = <span class="str">"table"</span>
+        }
+      }
+    ]
+  })
+}</code></pre>
+
+  <h3>CloudWatch Logs Insights Queries</h3>
+  <p>Paste these into CloudWatch Logs Insights, pointed at your <code>/ecs/your-app-name</code> log group:</p>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">CWL Insights — Useful Queries</span>
+</div>
+<pre><code><span class="cm">-- Error rate over time</span>
+fields @timestamp, @message
+| filter level = "error"
+| stats count() as errors by bin(5m)
+| sort @timestamp desc
+
+<span class="cm">-- Slowest requests</span>
+fields @timestamp, req.method, req.url, res.responseTime
+| filter res.responseTime > 1000
+| sort res.responseTime desc
+| limit 20
+
+<span class="cm">-- Request distribution by route</span>
+fields req.url
+| stats count() as requests by req.url
+| sort requests desc</code></pre>
+
+  <div class="takeaway-box">
+    <h4>📌 Section Takeaways</h4>
+    <ul>
+      <li>Enable Container Insights on your ECS cluster — it provides CPU, memory, and task-count metrics out of the box</li>
+      <li>Alarm on ALB 5xx count, not rate — a sudden spike of errors matters even if it's a small percentage</li>
+      <li>Structured JSON logging (Pino) unlocks CloudWatch Logs Insights filtering and aggregation</li>
+      <li>P99 latency alarms catch tail latency issues that averages hide</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ────────────────────────── SECTION 10 ────────────────────────── -->
+<div class="section" id="s10">
+  <div class="section-eyebrow">Section 10</div>
+  <h2>Multi-Environment: Dev / Staging / Prod</h2>
+
+  <p>
+    The pattern so far works for one environment. Here's how to extend it cleanly to dev, staging, and production using Terraform workspaces and per-environment variable files.
+  </p>
+
+  <h3>Approach 1: Terraform Workspaces + tfvars</h3>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">SHELL</span>
+</div>
+<pre><code><span class="cm"># Create workspaces</span>
+terraform workspace new dev
+terraform workspace new staging
+terraform workspace new prod
+
+<span class="cm"># Switch and apply with environment-specific vars</span>
+terraform workspace select staging
+terraform apply -var-file=environments/staging.tfvars</code></pre>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">HCL — environments/prod.tfvars</span>
+</div>
+<pre><code>environment           = <span class="str">"prod"</span>
+project_name          = <span class="str">"my-api"</span>
+owner                 = <span class="str">"platform-team"</span>
+aws_region            = <span class="str">"us-east-1"</span>
+desired_count         = <span class="num">3</span>
+container_cpu         = <span class="num">1024</span>
+container_memory      = <span class="num">2048</span>
+vpc_cidr              = <span class="str">"10.2.0.0/16"</span>
+public_subnet_cidrs   = [<span class="str">"10.2.1.0/24"</span>, <span class="str">"10.2.2.0/24"</span>]
+private_subnet_cidrs  = [<span class="str">"10.2.3.0/24"</span>, <span class="str">"10.2.4.0/24"</span>]
+github_org            = <span class="str">"your-org"</span>
+github_repo           = <span class="str">"your-repo"</span></code></pre>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">HCL — environments/dev.tfvars</span>
+</div>
+<pre><code>environment           = <span class="str">"dev"</span>
+project_name          = <span class="str">"my-api"</span>
+owner                 = <span class="str">"your-name"</span>
+aws_region            = <span class="str">"us-east-1"</span>
+desired_count         = <span class="num">1</span>       <span class="cm"># Save cost in dev</span>
+container_cpu         = <span class="num">256</span>
+container_memory      = <span class="num">512</span>
+<span class="cm"># Single NAT GW for dev — use a locals conditional to gate this</span>
+github_org            = <span class="str">"your-org"</span>
+github_repo           = <span class="str">"your-repo"</span></code></pre>
+
+  <h3>Approach 2: Module-Per-Environment (More Explicit)</h3>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">SHELL — Modules Layout</span>
+</div>
+<pre><code>terraform/
+├── modules/
+│   ├── networking/     # VPC, subnets, IGW, NAT
+│   ├── ecs-service/    # ECS cluster, task def, service
+│   ├── alb/            # ALB, target group, listeners
+│   ├── ecr/            # ECR repository + lifecycle
+│   └── iam/            # IAM roles for ECS + GitHub
+├── environments/
+│   ├── dev/
+│   │   ├── main.tf     # Calls modules with dev config
+│   │   └── backend.tf  # Dev-specific S3 state bucket
+│   ├── staging/
+│   │   ├── main.tf
+│   │   └── backend.tf
+│   └── prod/
+│       ├── main.tf
+│       └── backend.tf</code></pre>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">HCL — environments/staging/main.tf</span>
+</div>
+<pre><code>module <span class="str">"networking"</span> {
+  source = <span class="str">"../../modules/networking"</span>
+
+  project_name         = <span class="str">"my-api"</span>
+  environment          = <span class="str">"staging"</span>
+  vpc_cidr             = <span class="str">"10.1.0.0/16"</span>
+  public_subnet_cidrs  = [<span class="str">"10.1.1.0/24"</span>, <span class="str">"10.1.2.0/24"</span>]
+  private_subnet_cidrs = [<span class="str">"10.1.3.0/24"</span>, <span class="str">"10.1.4.0/24"</span>]
+}
+
+module <span class="str">"ecs_service"</span> {
+  source = <span class="str">"../../modules/ecs-service"</span>
+
+  project_name      = <span class="str">"my-api"</span>
+  environment       = <span class="str">"staging"</span>
+  vpc_id            = module.networking.vpc_id
+  private_subnet_ids = module.networking.private_subnet_ids
+  ecr_repository_url = module.ecr.repository_url
+  desired_count     = <span class="num">2</span>
+  container_cpu     = <span class="num">512</span>
+  container_memory  = <span class="num">1024</span>
+}
+
+module <span class="str">"ecr"</span> {
+  source = <span class="str">"../../modules/ecr"</span>
+
+  project_name = <span class="str">"my-api"</span>
+  environment  = <span class="str">"staging"</span>
+}</code></pre>
+
+  <h3>Multi-Environment GitHub Actions</h3>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">YAML — Multi-env deploy job structure</span>
+</div>
+<pre><code><span class="attr">jobs</span>:
+  test:
+    <span class="cm"># ... same as before ...</span>
+
+  build-and-push:
+    <span class="attr">needs</span>: test
+    <span class="cm"># ... same as before ...</span>
+
+  deploy-staging:
+    <span class="attr">name</span>: Deploy → Staging
+    <span class="attr">needs</span>: build-and-push
+    <span class="attr">environment</span>: staging
+    <span class="attr">runs-on</span>: ubuntu-latest
+    <span class="attr">steps</span>:
+      - <span class="attr">uses</span>: aws-actions/configure-aws-credentials@v4
+        <span class="attr">with</span>:
+          <span class="attr">role-to-assume</span>: ${{ secrets.STAGING_AWS_ROLE_ARN }}
+          <span class="attr">aws-region</span>: us-east-1
+      <span class="cm"># ... deploy steps using STAGING_ prefixed secrets ...</span>
+
+  deploy-prod:
+    <span class="attr">name</span>: Deploy → Production
+    <span class="attr">needs</span>: deploy-staging
+    <span class="attr">environment</span>: production  <span class="cm"># Requires manual approval in GitHub</span>
+    <span class="attr">runs-on</span>: ubuntu-latest
+    <span class="attr">steps</span>:
+      - <span class="attr">uses</span>: aws-actions/configure-aws-credentials@v4
+        <span class="attr">with</span>:
+          <span class="attr">role-to-assume</span>: ${{ secrets.PROD_AWS_ROLE_ARN }}
+          <span class="attr">aws-region</span>: us-east-1
+      <span class="cm"># ... deploy steps using PROD_ prefixed secrets ...</span></code></pre>
+
+  <div class="callout info">
+    <div class="callout-title">💡 GitHub Environment Protection Rules</div>
+    Set up the <code>production</code> GitHub Environment (Settings → Environments → production) with required reviewers. This gates the production deploy behind a manual approval step — no code reaches production without a human sign-off. The pipeline pauses and sends a Slack/email notification to the specified reviewers.
+  </div>
+
+  <div class="takeaway-box">
+    <h4>📌 Section Takeaways</h4>
+    <ul>
+      <li>Workspaces + tfvars is simpler for small teams; module-per-environment gives more isolation and clarity at scale</li>
+      <li>Use separate IAM roles per environment — staging and prod should have completely separate AWS credentials</li>
+      <li>GitHub Environment protection rules are your production gate — require at least one reviewer approval</li>
+      <li>Always deploy to staging before production — let staging bake for at least the time it takes to run your smoke tests</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ────────────────────────── SECTION 11 ────────────────────────── -->
+<div class="section" id="s11">
+  <div class="section-eyebrow">Section 11</div>
+  <h2>Rollbacks & Zero-Downtime Deployments</h2>
+
+  <p>
+    Deployments break. The question is: how fast can you recover? With this setup, you have multiple layers of protection.
+  </p>
+
+  <h3>ECS Deployment Circuit Breaker (Automatic)</h3>
+  <p>
+    Already configured in <code>ecs.tf</code> with <code>deployment_circuit_breaker { enable = true, rollback = true }</code>. If more than half of your new tasks fail their health check within the deployment, ECS automatically rolls back to the previous task definition revision. This happens without any human intervention.
+  </p>
+
+  <h3>Manual Rollback via AWS CLI</h3>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">SHELL — Manual rollback procedure</span>
+</div>
+<pre><code><span class="cm"># 1. List recent task definition revisions</span>
+aws ecs list-task-definitions \
+  --family-prefix my-api-staging-app \
+  --sort DESC \
+  --query 'taskDefinitionArns[:5]'
+
+<span class="cm"># Output example:</span>
+<span class="cm"># [</span>
+<span class="cm">#   "arn:aws:ecs:us-east-1:123456789:task-definition/my-api-staging-app:47",  ← current (broken)</span>
+<span class="cm">#   "arn:aws:ecs:us-east-1:123456789:task-definition/my-api-staging-app:46",  ← previous (good)</span>
+<span class="cm">#   "arn:aws:ecs:us-east-1:123456789:task-definition/my-api-staging-app:45",</span>
+<span class="cm"># ]</span>
+
+<span class="cm"># 2. Roll back to revision 46</span>
+aws ecs update-service \
+  --cluster my-api-staging-cluster \
+  --service my-api-staging-service \
+  --task-definition my-api-staging-app:46 \
+  --force-new-deployment
+
+<span class="cm"># 3. Watch the rollback progress</span>
+aws ecs describe-services \
+  --cluster my-api-staging-cluster \
+  --services my-api-staging-service \
+  --query 'services[0].{running:runningCount,pending:pendingCount,desired:desiredCount,status:deployments[0].rolloutState}'</code></pre>
+
+  <h3>Rollback GitHub Action</h3>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">YAML — .github/workflows/rollback.yml</span>
+</div>
+<pre><code><span class="attr">name</span>: Rollback
+
+<span class="attr">on</span>:
+  <span class="attr">workflow_dispatch</span>:
+    <span class="attr">inputs</span>:
+      environment:
+        <span class="attr">description</span>: Target environment
+        <span class="attr">required</span>: <span class="kw">true</span>
+        <span class="attr">type</span>: choice
+        <span class="attr">options</span>: [staging, prod]
+      revision:
+        <span class="attr">description</span>: Task definition revision to roll back to (leave blank for previous)
+        <span class="attr">required</span>: <span class="kw">false</span>
+        <span class="attr">type</span>: string
+
+<span class="attr">jobs</span>:
+  <span class="attr">rollback</span>:
+    <span class="attr">runs-on</span>: ubuntu-latest
+    <span class="attr">environment</span>: ${{ inputs.environment }}
+
+    <span class="attr">steps</span>:
+      - <span class="attr">name</span>: Configure AWS credentials
+        <span class="attr">uses</span>: aws-actions/configure-aws-credentials@v4
+        <span class="attr">with</span>:
+          <span class="attr">role-to-assume</span>: ${{ inputs.environment == 'prod' && secrets.PROD_AWS_ROLE_ARN || secrets.STAGING_AWS_ROLE_ARN }}
+          <span class="attr">aws-region</span>: us-east-1
+
+      - <span class="attr">name</span>: Get target revision
+        <span class="attr">id</span>: revision
+        <span class="attr">run</span>: |
+          if [ -n "${{ inputs.revision }}" ]; then
+            echo "arn=my-api-${{ inputs.environment }}-app:${{ inputs.revision }}" >> $GITHUB_OUTPUT
+          else
+            <span class="cm"># Get the second-most-recent revision (one before current)</span>
+            PREV=$(aws ecs list-task-definitions \
+              --family-prefix "my-api-${{ inputs.environment }}-app" \
+              --sort DESC --query 'taskDefinitionArns[1]' --output text)
+            echo "arn=$PREV" >> $GITHUB_OUTPUT
+          fi
+
+      - <span class="attr">name</span>: Execute rollback
+        <span class="attr">run</span>: |
+          echo "Rolling back to: ${{ steps.revision.outputs.arn }}"
+          aws ecs update-service \
+            --cluster "my-api-${{ inputs.environment }}-cluster" \
+            --service "my-api-${{ inputs.environment }}-service" \
+            --task-definition "${{ steps.revision.outputs.arn }}" \
+            --force-new-deployment
+          echo "✅ Rollback initiated"</code></pre>
+
+  <h3>Zero-Downtime: How It Actually Works</h3>
+  <p>ECS rolling deploys work as follows:</p>
+
+  <ol>
+    <li>ECS starts a new task with the updated image</li>
+    <li>ALB health checks run against the new task — it must return 200 on <code>/health</code></li>
+    <li>Once healthy, the new task is registered in the target group and starts receiving traffic</li>
+    <li>ECS sends SIGTERM to the old task — your server handles this and drains connections</li>
+    <li>After the deregistration delay (30s), the old task is fully stopped</li>
+    <li>ECS repeats for the next task until all tasks are updated</li>
+  </ol>
+
+  <p>
+    The <strong>deregistration delay of 30 seconds</strong> in the ALB target group matches the <strong>15-second graceful shutdown timeout</strong> in your Node.js server. This guarantees in-flight requests complete before the container exits.
+  </p>
+
+  <div class="takeaway-box">
+    <h4>📌 Section Takeaways</h4>
+    <ul>
+      <li>ECS Circuit Breaker auto-rollback is your first safety net — it requires zero manual action</li>
+      <li>Keep the rollback workflow in GitHub Actions so anyone on the team can roll back, not just people with AWS CLI access</li>
+      <li>Zero-downtime depends on your health check, deregistration delay, and SIGTERM handling all working together</li>
+      <li>Test your rollback procedure during a calm period — not during an incident</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ────────────────────────── SECTION 12 ────────────────────────── -->
+<div class="section" id="s12">
+  <div class="section-eyebrow">Section 12</div>
+  <h2>Cost Controls & Cleanup</h2>
+
+  <h3>Cost Breakdown: What This Stack Costs</h3>
+
+  <table>
+    <tr>
+      <th>Resource</th>
+      <th>Dev/Month</th>
+      <th>Prod/Month (est.)</th>
+    </tr>
+    <tr>
+      <td>ECS Fargate (512 CPU / 1GB, 1 task)</td>
+      <td>~$15</td>
+      <td>~$45 (2 tasks, larger CPU)</td>
+    </tr>
+    <tr>
+      <td>NAT Gateway (1 AZ)</td>
+      <td>~$32</td>
+      <td>~$64 (2 AZs)</td>
+    </tr>
+    <tr>
+      <td>ALB</td>
+      <td>~$18</td>
+      <td>~$22</td>
+    </tr>
+    <tr>
+      <td>RDS PostgreSQL (db.t4g.micro)</td>
+      <td>~$15</td>
+      <td>~$50 (db.t4g.small, Multi-AZ)</td>
+    </tr>
+    <tr>
+      <td>ECR (10 images)</td>
+      <td>~$1</td>
+      <td>~$2</td>
+    </tr>
+    <tr>
+      <td>CloudWatch Logs</td>
+      <td>~$2</td>
+      <td>~$10</td>
+    </tr>
+    <tr>
+      <td><strong>Total estimate</strong></td>
+      <td><strong>~$83/mo</strong></td>
+      <td><strong>~$193/mo</strong></td>
+    </tr>
+  </table>
+
+  <h3>Cost Reduction Tips</h3>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">HCL — Fargate Spot for non-prod</span>
+</div>
+<pre><code><span class="cm"># Use FARGATE_SPOT for dev/staging to save ~70% on compute</span>
+<span class="kw">resource</span> <span class="str">"aws_ecs_cluster_capacity_providers"</span> <span class="str">"main"</span> {
+  cluster_name = aws_ecs_cluster.main.name
+
+  capacity_providers = [<span class="str">"FARGATE"</span>, <span class="str">"FARGATE_SPOT"</span>]
+
+  default_capacity_provider_strategy {
+    <span class="cm"># Prod: 100% FARGATE (no spot interruptions)</span>
+    <span class="cm"># Dev: 0 FARGATE base, 100% SPOT</span>
+    capacity_provider = var.environment == <span class="str">"prod"</span> ? <span class="str">"FARGATE"</span> : <span class="str">"FARGATE_SPOT"</span>
+    weight            = <span class="num">1</span>
+    base              = var.environment == <span class="str">"prod"</span> ? <span class="num">1</span> : <span class="num">0</span>
+  }
+}</code></pre>
+
+  <h3>Teardown — Delete Everything</h3>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">SHELL — Full teardown</span>
+</div>
+<pre><code><span class="cm"># Scale ECS to 0 first (faster teardown)</span>
+aws ecs update-service \
+  --cluster my-api-staging-cluster \
+  --service my-api-staging-service \
+  --desired-count 0
+
+<span class="cm"># Delete all ECR images (required before ECR destroy)</span>
+aws ecr batch-delete-image \
+  --repository-name my-api-staging \
+  --image-ids "$(aws ecr list-images \
+    --repository-name my-api-staging \
+    --query 'imageIds[*]' --output json)"
+
+<span class="cm"># Terraform destroy — removes all provisioned resources</span>
+cd terraform/
+terraform destroy \
+  -var-file=environments/staging.tfvars \
+  -auto-approve</code></pre>
+
+  <div class="callout warn">
+    <div class="callout-title">⚠️ Destroy Protection</div>
+    Production resources have <code>enable_deletion_protection = true</code> on the ALB and should have similar protection on RDS. Terraform destroy will fail on these — you'll need to disable deletion protection manually first, or via Terraform with a targeted apply.
+  </div>
+</div>
+
+<!-- ────────────────────────── SECTION 13 ────────────────────────── -->
+<div class="section" id="s13">
+  <div class="section-eyebrow">Section 13</div>
+  <h2>Troubleshooting Guide</h2>
+
+  <p>Real issues you'll hit, and how to fix them fast.</p>
+
+  <h3>Issue: ECS Tasks Keep Restarting (Exit Code 1)</h3>
+
+<div class="code-header">
+  <div class="code-dots"><span></span><span></span><span></span></div>
+  <span class="code-lang">SHELL — Debug ECS task failures</span>
+</div>
+<pre><code><span class="cm"># Find stopped tasks and their stop reasons</span>
+aws ecs describe-tasks \
+  --cluster my-api-staging-cluster \
+  --tasks $(aws ecs list-tasks \
+    --cluster my-api-staging-cluster \
+    --desired-status STOPPED \
+    --query 'taskArns[:3]' --output text) \
+  --query 'tasks[*].{status:lastStatus,stop:stoppedReason,containers:containers[*].{name:name,exit:exitCode,reason:reason}}'
+
+<span class="cm"># Check CloudWatch Logs for the stopped task</span>
+aws logs get-log-events \
+  --log-group-name /ecs/my-api-staging \
+  --log-stream-name "ecs/app/TASK_ID_HERE" \
+  --limit 100</code></pre>
+
+  <p><strong>Common causes:</strong></p>
+  <ul>
+    <li>Missing or wrong environment variable — check config fail-fast logic</li>
+    <li>Database unreachable — check security group rules between ECS and RDS</li>
+    <li>Node.js port conflict — ensure <code>PORT</code> env var matches <code>containerPort</code> in task def</li>
+    <li>OOM killed — increase container memory or fix a memory leak</li>
+  </ul>
+
+  <h3>Issue: ALB Returns 503 Service Unavailable</h3>
+  <ul>
+    <li>Check that the target group shows healthy targets: <code>aws elbv2 describe-target-health --target-group-arn ...</code></li>
+    <li>Verify the health check path (<code>/health</code>) returns 200 from inside the container</li>
+    <li>Check that ECS security group allows inbound on the container port from the ALB security group</li>
+    <li>Look for <code>startPeriod</code> in the health check — give slow-starting apps time before marking unhealthy</li>
+  </ul>
+
+  <h3>Issue: GitHub Actions OIDC Authentication Fails</h3>
+  <ul>
+    <li>Verify the OIDC provider thumbprints are current (AWS occasionally rotates them)</li>
+    <li>Check the <code>StringLike</code> condition in the IAM role — the subject must match <code>repo:org/repo:ref:refs/heads/main</code> exactly</li>
+    <li>Ensure <code>id-token: write</code> permission is in the workflow's <code>permissions</code> block</li>
+    <li>Verify the role ARN in <code>AWS_ROLE_ARN</code> secret has no leading/trailing whitespace</li>
+  </ul>
+
+  <h3>Issue: Docker Image Pushed but ECS Still Running Old Version</h3>
+  <ul>
+    <li>Check that the task definition was updated — the new image URI must be in the container definition</li>
+    <li>Ensure <code>force-new-deployment: true</code> is set in the GitHub Actions ECS deploy step</li>
+    <li>If you're using the <code>:latest</code> tag, ECS may cache it — always tag with the commit SHA and specify the full SHA-tagged URI in the task definition</li>
+  </ul>
+
+  <h3>Issue: Terraform Wants to Destroy the ECS Service</h3>
+  <p>
+    This happens if you forgot <code>lifecycle { ignore_changes = [task_definition] }</code> on the ECS service. Terraform sees the task definition has been updated by GitHub Actions and wants to revert it. Add the lifecycle block and run <code>terraform apply</code> — it will add the ignore rule without affecting your running service.
+  </p>
+
+  <div class="takeaway-box">
+    <h4>📌 Section Takeaways</h4>
+    <ul>
+      <li><code>aws ecs describe-tasks</code> on STOPPED tasks is your first stop for ECS debugging</li>
+      <li>Always use SHA-tagged images in task definitions, not <code>:latest</code> — it makes rollbacks unambiguous</li>
+      <li>OIDC failures are usually a mismatch in the IAM role's trust policy conditions — read them carefully</li>
+      <li>The <code>lifecycle.ignore_changes</code> block on the ECS service is not optional</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ────────────────────────── SECTION 14 ────────────────────────── -->
+<div class="section" id="s14">
+  <div class="section-eyebrow">Section 14</div>
+  <h2>What's Next: Level Up Your Stack</h2>
+
+  <p>
+    This guide got you to a solid, production-ready foundation. Here's what to tackle next, in rough priority order:
+  </p>
+
+  <h3>Immediate Next Steps</h3>
+  <ol>
+    <li><strong>HTTPS / TLS.</strong> Add an ACM certificate and HTTPS listener to your ALB. Use <code>aws_acm_certificate</code> and <code>aws_acm_certificate_validation</code> in Terraform, and add a Route 53 record pointing to the ALB.</li>
+    <li><strong>ECS Auto Scaling.</strong> Add <code>aws_appautoscaling_target</code> and <code>aws_appautoscaling_policy</code> resources to scale task count based on ALB request count or CPU utilization. Set min=2, max=10 for a typical API.</li>
+    <li><strong>WAF.</strong> Attach AWS WAF to the ALB for rate limiting, bot detection, and OWASP top-10 protection. The managed rule groups are a great starting point.</li>
+    <li><strong>Database migrations.</strong> Add a GitHub Actions step that runs migrations (e.g., <code>node scripts/migrate.js</code>) before deploying the new ECS tasks. Use ECS <code>run-task</code> to run the migration as a one-off task in the same network.</li>
+  </ol>
+
+  <h3>Longer-Term Improvements</h3>
+  <ol>
+    <li><strong>Blue/Green deployments.</strong> Switch from rolling to blue/green using AWS CodeDeploy + ECS. This gives you instant traffic switching and instant rollback with zero overlap period.</li>
+    <li><strong>OpenTelemetry.</strong> Add the AWS Distro for OpenTelemetry (ADOT) as a sidecar container. Instrument your Node.js app with the OTEL SDK to get distributed traces in AWS X-Ray.</li>
+    <li><strong>Terraform remote state + locking.</strong> If you haven't already, move Terraform state to an S3 bucket with DynamoDB locking. Add a backend.tf and run <code>terraform init -migrate-state</code>.</li>
+    <li><strong>Dependency scanning.</strong> Add <code>npm audit</code> to the GitHub Actions test job. Consider adding <code>trivy</code> Docker image scanning before the ECR push step.</li>
+    <li><strong>Service mesh / ECS Service Connect.</strong> When you have multiple services talking to each other, ECS Service Connect provides service discovery and observability without managing a full mesh.</li>
+  </ol>
+
+  <div class="callout tip">
+    <div class="callout-title">✅ The Complete Repo</div>
+    All code examples from this guide are organized into a working repository structure. Start by running <code>terraform apply</code> in a dev environment to validate your setup before touching staging or production.
+  </div>
+</div>
+
+<!-- ────────────────────────── FINAL SUMMARY ────────────────────────── -->
+<div class="section">
+  <div class="section-divider">The Big Picture</div>
+
+  <h2>The Complete Checklist</h2>
+
+  <div class="takeaway-box">
+    <h4>✅ Infrastructure (Terraform)</h4>
+    <ul>
+      <li>VPC with public + private subnets across 2+ AZs</li>
+      <li>NAT Gateways for private subnet outbound access</li>
+      <li>ALB with target group and HTTP listener</li>
+      <li>ECR repository with image scanning and lifecycle policies</li>
+      <li>ECS Fargate cluster with Container Insights enabled</li>
+      <li>ECS task definition with health check and Secrets Manager integration</li>
+      <li>ECS service with circuit breaker + auto-rollback</li>
+      <li>IAM roles: task execution, task, and GitHub Actions OIDC</li>
+      <li>Secrets Manager for sensitive config</li>
+      <li>CloudWatch log group and key metric alarms</li>
+      <li>S3 backend with DynamoDB state locking</li>
+    </ul>
+  </div>
+
+  <div class="takeaway-box">
+    <h4>✅ Application (Node.js)</h4>
+    <ul>
+      <li><code>/health</code> (liveness) and <code>/ready</code> (readiness with DB check) endpoints</li>
+      <li>SIGTERM handler for graceful shutdown</li>
+      <li>Structured JSON logging (Pino)</li>
+      <li>Fail-fast on missing required env vars in production</li>
+      <li>Multi-stage Dockerfile with non-root user</li>
+      <li>Comprehensive <code>.dockerignore</code></li>
+    </ul>
+  </div>
+
+  <div class="takeaway-box">
+    <h4>✅ CI/CD (GitHub Actions)</h4>
+    <ul>
+      <li>PR checks: lint + test + Docker build (no push)</li>
+      <li>Main branch: test → build → push to ECR → deploy to ECS</li>
+      <li>OIDC for AWS authentication (no static keys)</li>
+      <li>Docker layer caching via GitHub Actions cache</li>
+      <li>Smoke test after deploy</li>
+      <li>Manual rollback workflow</li>
+      <li>Production deploy requires manual approval</li>
+    </ul>
+  </div>
+</div>
+
+</article>
+
+<!-- ═══════════════════════════ TOPICS ═══════════════════════════ -->
+<section class="topics-section">
+  <div class="wide-container">
+    <div class="toc-label">7 Punchy Topics (≤25 chars)</div>
+    <div class="topics-grid">
+      <div class="topic-card">
+        <span class="topic-icon">🏗️</span>
+        <h5>IaC or Go Home</h5>
+        <p>#terraform #aws</p>
+      </div>
+      <div class="topic-card">
+        <span class="topic-icon">🐳</span>
+        <h5>Docker Done Right</h5>
+        <p>#containers #devops</p>
+      </div>
+      <div class="topic-card">
+        <span class="topic-icon">⚡</span>
+        <h5>Push. Ship. Done.</h5>
+        <p>#cicd #automation</p>
+      </div>
+      <div class="topic-card">
+        <span class="topic-icon">🔐</span>
+        <h5>Zero Static Keys</h5>
+        <p>#oidc #security</p>
+      </div>
+      <div class="topic-card">
+        <span class="topic-icon">🔄</span>
+        <h5>Roll Back in 60s</h5>
+        <p>#ecs #reliability</p>
+      </div>
+      <div class="topic-card">
+        <span class="topic-icon">🌐</span>
+        <h5>Fargate, Not K8s</h5>
+        <p>#ecs #simplicity</p>
+      </div>
+      <div class="topic-card">
+        <span class="topic-icon">💰</span>
+        <h5>Infra on a Budget</h5>
+        <p>#cost #efficiency</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ HASHTAGS ═══════════════════════════ -->
+<section class="hashtag-section">
+  <div class="wide-container">
+    <div class="toc-label">SEO Hashtags</div>
+    <p style="color: var(--muted); font-size: 14px; margin-bottom: 8px;">Primary · Secondary · Tertiary</p>
+    <div class="hashtag-cloud">
+      <!-- Primary -->
+      <span class="hashtag primary">#NodeJS</span>
+      <span class="hashtag primary">#Terraform</span>
+      <span class="hashtag primary">#AWS</span>
+      <span class="hashtag primary">#GitHubActions</span>
+      <span class="hashtag primary">#DevOps</span>
+      <!-- Secondary -->
+      <span class="hashtag secondary">#CICD</span>
+      <span class="hashtag secondary">#ECS</span>
+      <span class="hashtag secondary">#Fargate</span>
+      <span class="hashtag secondary">#InfrastructureAsCode</span>
+      <span class="hashtag secondary">#CloudNative</span>
+      <span class="hashtag secondary">#Docker</span>
+      <span class="hashtag secondary">#ECR</span>
+      <span class="hashtag secondary">#IAM</span>
+      <span class="hashtag secondary">#OIDC</span>
+      <!-- Tertiary -->
+      <span class="hashtag tertiary">#CloudDevOps</span>
+      <span class="hashtag tertiary">#SoftwareDeployment</span>
+      <span class="hashtag tertiary">#AWSCloud</span>
+      <span class="hashtag tertiary">#BackendDevelopment</span>
+      <span class="hashtag tertiary">#ZeroDowntime</span>
+      <span class="hashtag tertiary">#ContainerOrchestration</span>
+      <span class="hashtag tertiary">#PlatformEngineering</span>
+      <span class="hashtag tertiary">#TerraformAWS</span>
+      <span class="hashtag tertiary">#NodeJsDeployment</span>
+      <span class="hashtag tertiary">#GitOps</span>
+      <span class="hashtag tertiary">#CloudSecurity</span>
+      <span class="hashtag tertiary">#SecretsManager</span>
+      <span class="hashtag tertiary">#Microservices</span>
+      <span class="hashtag tertiary">#SRE</span>
+      <span class="hashtag tertiary">#AutomatedDeployment</span>
+      <span class="hashtag tertiary">#AWSFargate</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ FOOTER ═══════════════════════════ -->
+<footer>
+  <div>
+    <div class="footer-brand">Ship It <span>Right</span></div>
+    <div style="font-size: 11px; margin-top: 4px; color: var(--muted);">
+      Node.js → AWS · Terraform · GitHub Actions
+    </div>
+  </div>
+  <div style="text-align: right;">
+    <div style="color: var(--accent); font-size: 13px; font-weight: 600; font-family: 'Syne', sans-serif;">Tagline</div>
+    <div style="margin-top: 4px; font-size: 13px; color: var(--text); font-style: italic; font-family: 'Lora', serif; max-width: 360px;">
+      "Build once, ship anywhere, sleep at night — because your infrastructure writes the playbook, not you."
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
