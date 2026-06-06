@@ -1,10 +1,19 @@
 # Are you ready, arrival is sooner than expected !!
 
-## Romans 10:9
+## [Romans 10:8-10‬](https://bible.com/bible/1/rom.10.8.KJV)
 Salvation comes through openly confessing Jesus as Lord and truly believing that God raised Him from the dead. Faith is not only private belief; it is also a declared trust in Christ.
 
-## Philippians 4:6–7
+“But what saith it? The word is nigh thee, even in thy mouth, and in thy heart: that is, the word of faith, which we preach;”
+‭‭ “that if thou shalt confess with thy mouth the Lord Jesus, and shalt believe in thine heart that God hath raised him from the dead, thou shalt be saved.”
+‭‭ “For with the heart man believeth unto righteousness; and with the mouth confession is made unto salvation.”
+
+## [Philippians 4:6–8](https://bible.com/bible/1/php.4.6.KJV)
 Do not be ruled by worry. Bring every concern to God in prayer with thanksgiving, and His peace will guard your heart and mind through Christ Jesus.
+
+“Be careful for nothing; but in every thing by prayer and supplication with thanksgiving let your requests be made known unto God.”
+‭‭ “And the peace of God, which passeth all understanding, shall keep your hearts and minds through Christ Jesus.”
+“Finally, brethren, whatsoever things are true, whatsoever things are honest, whatsoever things are just, whatsoever things are pure, whatsoever things are lovely, whatsoever things are of good report; if there be any virtue, and if there be any praise, think on these things.”
+
 
 ## Jeremiah 29:12–14
 God promises to listen when His people pray and seek Him sincerely. When they search for Him with all their heart, He will be found and will restore them.
