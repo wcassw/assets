@@ -14,9 +14,10 @@ Do not be ruled by worry. Bring every concern to God in prayer with thanksgiving
 ‭‭ “And the peace of God, which passeth all understanding, shall keep your hearts and minds through Christ Jesus.”
 “Finally, brethren, whatsoever things are true, whatsoever things are honest, whatsoever things are just, whatsoever things are pure, whatsoever things are lovely, whatsoever things are of good report; if there be any virtue, and if there be any praise, think on these things.”
 
-
-## Jeremiah 29:12–14
+## [Jeremiah 29:12–14](https://bible.com/bible/1/jer.29.12.KJV)
 God promises to listen when His people pray and seek Him sincerely. When they search for Him with all their heart, He will be found and will restore them.
+
+“Then shall ye call upon me, and ye shall go and pray unto me, and I will hearken unto you.”,  “And ye shall seek me, and find me, when ye shall search for me with all your heart.”   “And I will be found of you, saith the LORD: and I will turn away your captivity, and I will gather you from all the nations, and from all the places whither I have driven you, saith the LORD; and I will bring you again into the place whence I caused you to be carried away captive.”
 
 ## 1 Thessalonians 5:17–18
 Believers are called to live in constant prayer and give thanks in every situation. Gratitude and prayer are part of God’s will for those in Christ.
