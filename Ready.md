@@ -94,5 +94,7 @@ The key phrase is:
 
 ## [xxx](cxxx)
 
-
+“then we which are alive and remain shall be caught up together with them in the clouds, to meet the Lord in the air: and so shall we ever be with the Lord.”
+‭‭1 Thessalonians‬ ‭4‬:‭17‬ ‭KJV‬‬
+https://bible.com/bible/1/1th.4.17.KJV
 
