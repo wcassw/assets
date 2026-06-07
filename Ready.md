@@ -88,13 +88,11 @@ The key phrase is:
 
 ## [1 Peter 5:10](https://bible.com/bible/1/1pe.5.10.KJV)
 
-“But the God of all grace, who hath called us unto his eternal glory by Christ Jesus, after that ye have suffered a while, make you perfect, stablish, strengthen, settle you.”
+> “But the God of all grace, who hath called us unto his eternal glory by Christ Jesus, after that ye have suffered a while, make you perfect, stablish, strengthen, settle you.”
 ‭‭
 ---
 
-## [xxx](cxxx)
+## [1 Thessalonians 4:17](https://bible.com/bible/1/1th.4.17.KJV)
 
-“then we which are alive and remain shall be caught up together with them in the clouds, to meet the Lord in the air: and so shall we ever be with the Lord.”
-‭‭1 Thessalonians‬ ‭4‬:‭17‬ ‭KJV‬‬
-https://bible.com/bible/1/1th.4.17.KJV
-
+> “then we which are alive and remain shall be caught up together with them in the clouds, to meet the Lord in the air: and so shall we ever be with the Lord.”
+‭‭
