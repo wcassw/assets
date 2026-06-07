@@ -1,0 +1,169 @@
+PostgreSQL Health Report Package
+================================
+
+This package installs a comprehensive, self-contained database health
+reporting system inside PostgreSQL.
+
+It creates:
+- A persistent alerts table
+- A full health report function
+- Summary and critical-only helper functions
+
+--------------------------------------------------
+REQUIREMENTS
+--------------------------------------------------
+- PostgreSQL 12 or newer (13+ recommended)
+- Access to system catalog views (pg_stat_*)
+- Permission to CREATE FUNCTION and CREATE TABLE
+- Optional but recommended: permission to CREATE EXTENSION pgcrypto
+
+--------------------------------------------------
+INSTALLATION
+--------------------------------------------------
+
+1. Copy the SQL file to your database host (or your workstation):
+
+   health_report_function.sql
+
+2. Connect to the target database:
+
+   psql -d your_database_name
+
+3. Run the installer:
+
+   \i health_report_function.sql
+
+   or
+
+   psql -d your_database_name -f health_report_function.sql
+
+4. Verify installation:
+
+   \df run_health*
+   \dt health_alerts
+
+--------------------------------------------------
+RUNNING A HEALTH CHECK
+--------------------------------------------------
+
+Run a full health scan:
+
+   SELECT * FROM run_health_report();
+
+This:
+- Generates a unique run_id
+- Executes all health checks
+- Stores results in public.health_alerts
+- Returns the full report ordered by severity
+
+--------------------------------------------------
+COMMON QUERIES
+--------------------------------------------------
+
+Latest summary:
+
+   SELECT * FROM run_health_summary();
+
+Critical-only findings:
+
+   SELECT * FROM run_health_critical();
+
+Boolean check (useful for automation):
+
+   SELECT * FROM has_critical_alerts();
+
+Query historical alerts:
+
+   SELECT *
+   FROM health_alerts
+   WHERE severity = 'CRITICAL'
+   ORDER BY observed_at DESC;
+
+--------------------------------------------------
+SEVERITY LEVELS
+--------------------------------------------------
+
+CRITICAL
+- Immediate risk to availability, durability, or correctness
+- Examples: invalid indexes, XID wraparound risk, replication lag
+
+WARN
+- Performance or operational risk
+- Examples: high connection usage, lock contention, autovacuum disabled
+
+INFO
+- Informational or optimization opportunities
+- Examples: unused indexes, general capacity metrics
+
+--------------------------------------------------
+WHAT IS COVERED
+--------------------------------------------------
+
+The report inspects:
+
+- Connection pressure
+- Cache hit ratio
+- Long-running queries
+- Lock waits and deadlocks
+- Invalid or unusable indexes
+- Dead tuple accumulation
+- Autovacuum configuration issues
+- XID wraparound risk
+- Temporary file usage
+- Database size and growth indicators
+- Replication lag (primary and standby)
+- Checkpoint pressure
+
+Note:
+- OS-level disk, CPU, and memory metrics are intentionally out of scope
+- All data comes from PostgreSQL system views
+
+--------------------------------------------------
+AUTOMATION / CI / MONITORING
+--------------------------------------------------
+
+Typical automation pattern:
+
+1. Run:
+
+   SELECT * FROM run_health_report();
+
+2. Check:
+
+   SELECT has_critical FROM has_critical_alerts();
+
+3. Fail a job or alert if has_critical = true
+
+This design works well with:
+- cron
+- CI pipelines
+- Airflow
+- Rundeck
+- Kubernetes jobs
+
+--------------------------------------------------
+TUNING
+--------------------------------------------------
+
+Thresholds are defined inside run_health_report()
+in the "thresholds" CTE.
+
+You can safely adjust:
+- Connection percentage limits
+- Query duration thresholds
+- Dead tuple ratios
+- Replication lag limits
+
+--------------------------------------------------
+UNINSTALL
+--------------------------------------------------
+
+DROP FUNCTION IF EXISTS run_health_report();
+DROP FUNCTION IF EXISTS run_health_summary();
+DROP FUNCTION IF EXISTS run_health_critical();
+DROP FUNCTION IF EXISTS has_critical_alerts();
+DROP TABLE IF EXISTS health_alerts;
+
+--------------------------------------------------
+END
+--------------------------------------------------
