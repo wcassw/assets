@@ -85,3 +85,9 @@ The key phrase is:
 > shall a nation be born at once?
 
 ---
+
+## 
+
+“But the God of all grace, who hath called us unto his eternal glory by Christ Jesus, after that ye have suffered a while, make you perfect, stablish, strengthen, settle you.”
+‭‭1 Peter‬ ‭5‬:‭10‬ ‭KJV‬‬
+https://bible.com/bible/1/1pe.5.10.KJV
